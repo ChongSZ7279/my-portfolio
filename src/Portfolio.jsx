@@ -1,1143 +1,577 @@
-import React, { useState, useEffect } from 'react';
-import { Github, Linkedin, Mail, ExternalLink, ChevronDown, Menu, X, Code, Briefcase, Award, User, Sparkles, TrendingUp, Heart, Download, ArrowRight, Star, Zap } from 'lucide-react';
-import { Trophy, Database, Settings } from 'lucide-react';
-import MindfulMeImg from "./assets/projects/MindfulMe.png"; 
-import Arduino from "./assets/projects/Arduino.png"
-import Durian from "./assets/projects/Durian.png"
-import FoodFul from "./assets/projects/FoodFul.png"
-import TrustChain from "./assets/projects/TrustChain.png"
-import Robocon from "./assets/projects/UTMRobocon.png"
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Github, Linkedin, Mail, ChevronDown, Menu, X, ArrowRight, Terminal } from 'lucide-react';
+import SiewZhenImg from './data/image/SiewZhen.png';
+import { ABOUT_CARDS } from './data/about';
+import TechStack from './TechStack';
+import GrowthTimeline from './GrowthTimeLine';
+import AboutMe from './AboutMe';
+import ProjectsAndAchievements from './ProjectAndAchivement';
+import SectionHeader from './components/SectionHeader';
+import useHorizontalSwipeNavigate from './hooks/useHorizontalSwipeNavigate';
 
+// ─── PARTICLE SYSTEM ───────────────────────────────────────────────────────────
+const ParticleField = () => {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationId;
+    let particles = [];
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+    class Particle {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.vx = (Math.random() - 0.5) * 0.4;
+        this.vy = (Math.random() - 0.5) * 0.4;
+        this.size = Math.random() * 1.5 + 0.3;
+        this.alpha = Math.random() * 0.5 + 0.1;
+        this.color = Math.random() > 0.5 ? '99,102,241' : '6,182,212';
+      }
+      update() {
+        this.x += this.vx; this.y += this.vy;
+        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+      }
+      draw() {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${this.color},${this.alpha})`;
+        ctx.fill();
+      }
+    }
+    for (let i = 0; i < 120; i++) particles.push(new Particle());
+    const connect = () => {
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const d = Math.hypot(particles[i].x - particles[j].x, particles[i].y - particles[j].y);
+          if (d < 100) {
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.strokeStyle = `rgba(99,102,241,${0.08 * (1 - d / 100)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        }
+      }
+    };
+    const loop = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => { p.update(); p.draw(); });
+      connect();
+      animationId = requestAnimationFrame(loop);
+    };
+    loop();
+    return () => { cancelAnimationFrame(animationId); window.removeEventListener('resize', resize); };
+  }, []);
+  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0" />;
+};
+
+// ─── GLITCH TEXT ───────────────────────────────────────────────────────────────
+const GlitchText = ({ text, className = '' }) => {
+  const [glitching, setGlitching] = useState(false);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setGlitching(true);
+      setTimeout(() => setGlitching(false), 200);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, []);
+  return (
+    <span className={`relative inline-block ${className}`}>
+      <span className={glitching ? 'opacity-0' : 'opacity-100'}>{text}</span>
+      {glitching && <>
+        <span className="absolute inset-0 text-cyan-400 translate-x-0.5 -translate-y-0.5 opacity-70">{text}</span>
+        <span className="absolute inset-0 text-violet-500 -translate-x-0.5 translate-y-0.5 opacity-70">{text}</span>
+      </>}
+    </span>
+  );
+};
+
+// ─── TYPEWRITER ────────────────────────────────────────────────────────────────
+const TypeWriter = ({ strings, speed = 80, deleteSpeed = 40, pause = 2000 }) => {
+  const [display, setDisplay] = useState('');
+  const [idx, setIdx] = useState(0);
+  const [typing, setTyping] = useState(true);
+  const [charIdx, setCharIdx] = useState(0);
+  useEffect(() => {
+    if (typing) {
+      if (charIdx < strings[idx].length) {
+        const t = setTimeout(() => setCharIdx(c => c + 1), speed);
+        return () => clearTimeout(t);
+      } else {
+        const t = setTimeout(() => setTyping(false), pause);
+        return () => clearTimeout(t);
+      }
+    } else {
+      if (charIdx > 0) {
+        const t = setTimeout(() => setCharIdx(c => c - 1), deleteSpeed);
+        return () => clearTimeout(t);
+      } else {
+        setIdx(i => (i + 1) % strings.length);
+        setTyping(true);
+      }
+    }
+  }, [charIdx, typing, idx]);
+  useEffect(() => { setDisplay(strings[idx].slice(0, charIdx)); }, [charIdx, idx]);
+  return <span>{display}<span className="animate-pulse text-cyan-400">|</span></span>;
+};
+
+// ─── COUNTER ───────────────────────────────────────────────────────────────────
+const Counter = ({ end, suffix = '' }) => {
+  const [count, setCount] = useState(0);
+  const ref = useRef(null);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) {
+        let start = 0;
+        const step = end / 40;
+        const t = setInterval(() => {
+          start += step;
+          if (start >= end) { setCount(end); clearInterval(t); } else setCount(Math.floor(start));
+        }, 30);
+        obs.disconnect();
+      }
+    }, { threshold: 0.5 });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, [end]);
+  return <span ref={ref}>{count}{suffix}</span>;
+};
+
+// (Section headers are shared via ./components/SectionHeader)
+
+// ─── WORLD OF TIME SIDE RAIL BUTTON ──────────────────────────────────────────
+const WorldOfTimeButton = ({ onClick }) => {
+  const [hovered, setHovered] = useState(false);
+  const [tick, setTick] = useState(0);
+
+  // Animate the orbital ring dots
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 50);
+    return () => clearInterval(id);
+  }, []);
+
+  const orbitAngle = (tick * 3) % 360;
+  const orbitRad = (orbitAngle * Math.PI) / 180;
+  const r = 14; // orbit radius
+  const dotX = Math.cos(orbitRad) * r;
+  const dotY = Math.sin(orbitRad) * r;
+  const dot2X = Math.cos(orbitRad + Math.PI) * r;
+  const dot2Y = Math.sin(orbitRad + Math.PI) * r;
+
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-40 flex-col items-center gap-0 group"
+      style={{ right: 0 }}
+      aria-label="Enter World of Time — Journey"
+    >
+      {/* The pill */}
+      <div
+        className="relative flex flex-col items-center gap-3 px-3 py-5 rounded-l-2xl transition-all duration-500"
+        style={{
+          background: hovered
+            ? 'linear-gradient(180deg, rgba(6,182,212,0.18) 0%, rgba(99,102,241,0.18) 100%)'
+            : 'linear-gradient(180deg, rgba(6,182,212,0.07) 0%, rgba(99,102,241,0.07) 100%)',
+          border: '1px solid',
+          borderRight: 'none',
+          borderColor: hovered ? 'rgba(6,182,212,0.6)' : 'rgba(6,182,212,0.2)',
+          boxShadow: hovered
+            ? '-8px 0 32px -4px rgba(6,182,212,0.25), inset 0 0 20px rgba(6,182,212,0.05)'
+            : '-4px 0 16px -4px rgba(6,182,212,0.1)',
+          transform: hovered ? 'translateX(-4px)' : 'translateX(0)',
+          backdropFilter: 'blur(12px)',
+        }}
+      >
+        {/* Animated orbital SVG icon */}
+        <div className="relative w-8 h-8 flex-shrink-0">
+          <svg width="32" height="32" viewBox="-18 -18 36 36" className="overflow-visible">
+            {/* Outer orbit ring */}
+            <circle cx="0" cy="0" r="14" fill="none"
+              stroke={hovered ? 'rgba(6,182,212,0.5)' : 'rgba(6,182,212,0.2)'}
+              strokeWidth="0.8"
+              strokeDasharray="3 4"
+              style={{ transition: 'stroke 0.4s' }}
+            />
+            {/* Inner glow core */}
+            <circle cx="0" cy="0" r="5" fill="none"
+              stroke={hovered ? 'rgba(99,102,241,0.8)' : 'rgba(99,102,241,0.4)'}
+              strokeWidth="1"
+              style={{ transition: 'stroke 0.4s' }}
+            />
+            <circle cx="0" cy="0" r="2.5"
+              fill={hovered ? '#818cf8' : 'rgba(99,102,241,0.5)'}
+              style={{ transition: 'fill 0.4s' }}
+            />
+            {/* Orbiting dots */}
+            <circle cx={dotX} cy={dotY} r="2"
+              fill={hovered ? '#06b6d4' : 'rgba(6,182,212,0.6)'}
+              style={{ transition: 'fill 0.2s' }}
+            />
+            <circle cx={dot2X} cy={dot2Y} r="1.2"
+              fill={hovered ? '#818cf8' : 'rgba(99,102,241,0.4)'}
+              style={{ transition: 'fill 0.2s' }}
+            />
+          </svg>
+        </div>
+
+        {/* Vertical text */}
+        <span
+          className="text-[10px] font-mono tracking-[0.35em] uppercase transition-colors duration-300"
+          style={{
+            writingMode: 'vertical-rl',
+            transform: 'rotate(180deg)',
+            color: hovered ? '#06b6d4' : '#64748b',
+            letterSpacing: '0.35em',
+          }}
+        >
+          World of Time
+        </span>
+
+        {/* Gradient line */}
+        <div
+          className="w-px transition-all duration-500"
+          style={{
+            height: hovered ? 28 : 16,
+            background: 'linear-gradient(to bottom, #06b6d4, #818cf8)',
+            opacity: hovered ? 1 : 0.4,
+          }}
+        />
+
+        {/* Journey label */}
+        <span
+          className="text-[9px] font-mono uppercase tracking-widest transition-colors duration-300"
+          style={{ color: hovered ? '#818cf8' : '#334155' }}
+        >
+          Journey
+        </span>
+
+        {/* Arrow */}
+        <span
+          className="text-xs transition-all duration-300"
+          style={{
+            color: hovered ? '#06b6d4' : '#334155',
+            transform: hovered ? 'translateX(-2px)' : 'translateX(0)',
+          }}
+        >
+          ←
+        </span>
+
+        {/* Hover glow edge */}
+        {hovered && (
+          <div
+            className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full"
+            style={{ background: 'linear-gradient(to bottom, #06b6d4, #818cf8)', boxShadow: '0 0 8px #06b6d4' }}
+          />
+        )}
+      </div>
+    </button>
+  );
+};
+
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 const Portfolio = () => {
+  const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState('home');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [isLoading, setIsLoading] = useState(true);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [loaded, setLoaded] = useState(false);
+
+  useHorizontalSwipeNavigate({
+    enabled: true,
+    onSwipeLeft: () => navigate('/journey'),
+  });
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
-      
-      const sections = ['home', 'journey', 'projects', 'skills', 'achievements', 'contact'];
-      const current = sections.find(section => {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          return rect.top <= 100 && rect.bottom >= 100;
-        }
+    setTimeout(() => setLoaded(true), 100);
+    const onScroll = () => {
+      setIsScrolled(window.scrollY > 60);
+      const secs = ['home', 'about', 'stack', 'projects', 'achievements', 'contact'];
+      const cur = secs.find(s => {
+        const el = document.getElementById(s);
+        if (el) { const r = el.getBoundingClientRect(); return r.top <= 120 && r.bottom >= 120; }
         return false;
       });
-      if (current) setActiveSection(current);
+      if (cur) setActiveSection(cur);
     };
-
-    const handleMouseMove = (e) => {
-      setMousePosition({ x: e.clientX, y: e.clientY });
-    };
-
-    // Simulate loading
-    setTimeout(() => setIsLoading(false), 2000);
-
-    window.addEventListener('scroll', handleScroll);
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('mousemove', handleMouseMove);
-    };
+    const onMouse = (e) => setMousePos({ x: e.clientX, y: e.clientY });
+    window.addEventListener('scroll', onScroll);
+    window.addEventListener('mousemove', onMouse);
+    return () => { window.removeEventListener('scroll', onScroll); window.removeEventListener('mousemove', onMouse); };
   }, []);
 
-  const scrollToSection = (id) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setActiveSection(id);
-      setIsMenuOpen(false);
-    }
+  const scrollTo = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    setActiveSection(id);
+    setIsMenuOpen(false);
   };
 
-  // Loading Screen
-  if (isLoading) {
-    return (
-      <div className="fixed inset-0 bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 flex items-center justify-center z-50">
-        <div className="flex flex-col items-center justify-center relative">
-          {/* Spinner */}
-          <div className="w-20 h-20 border-4 border-purple-500/30 border-t-purple-500 rounded-full animate-spin relative mb-4">
-            {/* Sparkles icon centered inside spinner */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Sparkles className="text-purple-400 animate-pulse" size={24} />
-            </div>
-          </div>
-          {/* Loading Text */}
-          <p className="text-purple-300 text-lg mt-4 animate-pulse text-center">
-            Loading Portfolio...
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-
-  const projects = [
-    {
-      title: "MindfulMe",
-      desc: "A multilingual mental health app with AI chat, mood tracking, and meditation features.",
-      tech: ["Flutter", "Node.js", "Express.js", "MySQL", "Gemini AI"],
-      link: "https://github.com/ChongSZ7279/mental_help",
-      demo: "https://www.youtube.com/watch?si=8sRQN_LR0aHeksN5&v=R92lvP_vL5Q&feature=youtu.be",
-      image: MindfulMeImg,
-      color: "from-blue-500/20 to-purple-500/20",
-      journey: [
-        "Started as a class project focusing on basic mood tracking",
-        "Integrated AI chat after learning about NLP APIs",
-        "Expanded to multilingual support for wider accessibility",
-        "Optimized performance through state management improvements"
-      ],
-      growth: "Learned full-stack development integration and AI implementation"
-    },
-    {
-      title: "TrustChain",
-      desc: "Blockchain-based donation platform with smart contract disbursements. Top 10 at VHACK 2025.",
-      tech: ["React", "Laravel", "Solidity", "Web3.js", "Scroll"],
-      link: "https://github.com/ChongSZ7279/TrustChain",
-      demo: "https://www.youtube.com/watch?v=KfCRkoNDBb8",
-      image: TrustChain,
-      color: "from-emerald-500/20 to-teal-500/20",
-      journey: [
-        "Initial concept focused on basic blockchain transactions",
-        "Implemented smart contracts for automated fund disbursement",
-        "Added multi-signature wallet security features",
-        "Integrated with Scroll blockchain for better scalability"
-      ],
-      growth: "Mastered Web3 technologies and decentralized application architecture"
-    },
-    {
-      title: "Durian Quality Checker",
-      desc: "Visual durian grading tool using YOLOv5 and a full-stack web interface. Top 15 at Hack@10 2023.",
-      tech: ["YOLOv5", "React", "Node.js"],
-      link: "https://github.com/ChongSZ7279",
-      demo: "https://www.youtube.com/watch?v=anNPeiwjJas&feature=youtu.be",
-      image: Durian,
-      color: "from-amber-500/20 to-orange-500/20",
-      journey: [
-        "Began with basic image processing algorithms",
-        "Transitioned to YOLOv5 for real-time object detection",
-        "Built custom dataset with 1000+ durian images",
-        "Optimized model accuracy from 65% to 89% through iterative training"
-      ],
-      growth: "Gained expertise in computer vision and machine learning deployment"
-    },
-    {
-      title: "UTM Robocon Website",
-      desc: "Official digital platform for UTM Robocon team with full SEO optimization.",
-      tech: ["React", "Node.js", "Next.js", "SEO"],
-      link: "https://utmrobocon.com",
-      demo: "https://utmrobocon.com",
-      image: Robocon,
-      color: "from-pink-500/20 to-rose-500/20",
-      journey: [
-        "Started with basic React components",
-        "Implemented SSR with Next.js for better SEO",
-        "Added performance optimizations and lazy loading",
-        "Integrated analytics and monitoring tools"
-      ],
-      growth: "Deepened understanding of web performance and search engine optimization"
-    }
-  ];
-
-  const skills = {
-    "Languages": ["C++", "C", "Java", "Python", "JavaScript"],
-    "Frontend": ["HTML", "CSS", "React", "Flutter", "Next.js"],
-    "Backend": ["Node.js", "Laravel", "Spring MVC", "Express.js"],
-    "Databases": ["MySQL", "Oracle"],
-    "Tools & Others": ["Git", "Figma", "Web3.js", "Solidity", "Arduino"]
-  };
-
-  const getTechLogo = (techName) => {
-    const logoMap = {
-      "C++": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg",
-      "C": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg",
-      "Java": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg",
-      "Python": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/python/python-original.svg",
-      "JavaScript": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg",
-      "HTML": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/html5/html5-original.svg",
-      "CSS": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg",
-      "React": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg",
-      "Flutter": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/flutter/flutter-original.svg",
-      "Next.js": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nextjs/nextjs-original.svg",
-      "Node.js": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nodejs/nodejs-original.svg",
-      "Laravel": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/laravel/laravel-original.svg",
-      "Spring MVC": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/spring/spring-original.svg",
-      "Express.js": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/express/express-original.svg",
-      "MySQL": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/mysql/mysql-original.svg",
-      "Oracle": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/oracle/oracle-original.svg",
-      "Git": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/git/git-original.svg",
-      "Figma": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/figma/figma-original.svg",
-      "Web3.js": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/web3js/web3js-original.svg",
-      "Solidity": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/solidity/solidity-original.svg",
-      "Arduino": "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/arduino/arduino-original.svg"
-    };
-    
-    return logoMap[techName] || "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/codepen/codepen-original.svg";
-  };
-
-  const getCategoryIcon = (category) => {
-    const icons = {
-      "Languages": <Code className="text-white" size={24} />,
-      "Frontend": <Sparkles className="text-white" size={24} />,
-      "Backend": <Zap className="text-white" size={24} />,
-      "Databases": <Database className="text-white" size={24} />,
-      "Tools & Others": <Settings className="text-white" size={24} />
-    };
-    return icons[category] || <Code className="text-white" size={24} />;
-  };
-
-  const getTechType = (tech) => {
-    const types = {
-      "C++": "Systems Programming",
-      "C": "Low-level Programming", 
-      "Java": "Enterprise Development",
-      "Python": "AI/ML & Scripting",
-      "JavaScript": "Web Development",
-      "React": "UI Framework",
-      "Flutter": "Cross-platform",
-      "Next.js": "Full-stack Framework",
-      "Node.js": "Runtime Environment",
-      "Laravel": "PHP Framework",
-      "Spring MVC": "Java Framework",
-      "Express.js": "Web Framework",
-      "MySQL": "Relational Database",
-      "Oracle": "Enterprise Database",
-      "Git": "Version Control",
-      "Figma": "Design Tool",
-      "Web3.js": "Blockchain Library",
-      "Solidity": "Smart Contracts",
-      "Arduino": "Embedded Systems"
-    };
-    return types[tech] || "Technology";
-  };
-
-  const getProficiencyLevel = (tech) => {
-    const levels = {
-      "C++": 3, "C": 3, "Java": 3, "Python": 3, "JavaScript": 3,
-      "React": 3, "Flutter": 2, "Next.js": 2, "Node.js": 3,
-      "Laravel": 2, "Spring MVC": 2, "Express.js": 3,
-      "MySQL": 3, "Oracle": 2, "Git": 3, "Figma": 2,
-      "Web3.js": 2, "Solidity": 2, "Arduino": 2
-    };
-    return levels[tech] || 2;
-  };
-
-  const achievements = [
-    { 
-      title: "Top 10 Finalist", 
-      event: "VHACK 2025 (TrustChain)", 
-      icon: "🏅", 
-      learning: "Blockchain security",
-      image: TrustChain,
-      color: "from-emerald-500/20 to-teal-500/20"
-    },
-    { 
-      title: "Panasonic Award", 
-      event: "ABU Robocon 2024", 
-      icon: "🏅", 
-      learning: "Hardware-software integration",
-      image: Robocon,
-      color: "from-blue-500/20 to-cyan-500/20"
-    },
-    { 
-      title: "Champion", 
-      event: "HCI Day 2024 (Foodful App)", 
-      icon: "🥇", 
-      learning: "User-centered design principles",
-      image: FoodFul,
-      color: "from-purple-500/20 to-pink-500/20"
-    },
-    { 
-      title: "Bronze Award", 
-      event: "Fusion 2024 (Foodful App)", 
-      icon: "🥉", 
-      learning: "Cross-platform development",
-      image: FoodFul,
-      color: "from-amber-500/20 to-orange-500/20"
-    },
-    { 
-      title: "Top 15 Finalist", 
-      event: "Hack@10 2023 (Durian)", 
-      icon: "🏅", 
-      learning: "Machine learning deployment",
-      image: Durian,
-      color: "from-orange-500/20 to-red-500/20"
-    },
-    { 
-      title: "Champion", 
-      event: "Young Maker Challenge 2019", 
-      icon: "🏆", 
-      learning: "Prototype development",
-      image: Arduino,
-      color: "from-purple-500/20 to-indigo-500/20"
-    },
-  ];
-
-  const growthTimeline = [
-    { 
-      year: "2019", 
-      event: "First Programming Experience", 
-      learning: "Learned Arduino and discovered programming through hardware interaction" 
-    },
-    { 
-      year: "2021", 
-      event: "Foundation Studies", 
-      learning: "Built programming fundamentals at Labuan Matriculation College" 
-    },
-    { 
-      year: "2022", 
-      event: "University Journey Begins", 
-      learning: "Started Software Engineering degree at Universiti Teknologi Malaysia (UTM)" 
-    },
-    { 
-      year: "2023", 
-      event: "Hardware Programming & Robotics", 
-      learning: "Joined UTM Robocon as Programming Member, learned embedded systems" 
-    },
-    { 
-      year: "2024", 
-      event: "Real-World Project Deployment", 
-      learning: "First stakeholder project - Sagile Development Tools, learned deployment and client collaboration" 
-    },
-    { 
-      year: "2025", 
-      event: "Blockchain Technology", 
-      learning: "Exploring Web3, smart contracts, and decentralized applications" 
-    }
-  ];
+  const navItems = ['home', 'about', 'stack', 'projects', 'achievements', 'contact'];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 text-white overflow-hidden">
-      {/* Enhanced Animated Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.1),transparent_50%)]"></div>
-        <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(139,92,246,0.05)_25%,transparent_25%),linear-gradient(-45deg,rgba(139,92,246,0.05)_25%,transparent_25%),linear-gradient(45deg,transparent_75%,rgba(139,92,246,0.05)_75%),linear-gradient(-45deg,transparent_75%,rgba(139,92,246,0.05)_75%)] bg-[length:20px_20px]"></div>
-        <div 
-          className="absolute w-96 h-96 bg-purple-500/10 rounded-full blur-3xl transition-all duration-700 ease-out"
-          style={{
-            left: `${mousePosition.x - 192}px`,
-            top: `${mousePosition.y - 192}px`,
-          }}
-        ></div>
-      </div>
+    <div className="min-h-screen bg-[#050B17] text-white font-sans overflow-x-hidden">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap');
+        :root { font-family: 'Outfit', sans-serif; }
+        .font-display { font-family: 'Syne', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        html { scroll-behavior: smooth; }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #050B17; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 2px; }
+        ::-webkit-scrollbar-thumb:hover { background: #06b6d4; }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+        @keyframes scanline { 0%{transform:translateY(-100%)} 100%{transform:translateY(100vh)} }
+        @keyframes glow-pulse { 0%,100%{opacity:0.4} 50%{opacity:0.8} }
+        @keyframes fade-up { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes slide-right { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-glow-pulse { animation: glow-pulse 3s ease-in-out infinite; }
+        .animate-fade-up { animation: fade-up 0.7s ease forwards; }
+        .animate-slide-right { animation: slide-right 0.5s ease forwards; }
+        .grid-bg { background-image: linear-gradient(rgba(6,182,212,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(6,182,212,0.03) 1px, transparent 1px); background-size: 60px 60px; }
+        .noise { background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E"); }
+        .hex-clip { clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); }
+        .text-gradient { background: linear-gradient(135deg, #fff 0%, #94a3b8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .text-gradient-cyan { background: linear-gradient(135deg, #06b6d4 0%, #818cf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .border-glow { box-shadow: 0 0 20px rgba(6,182,212,0.1), inset 0 0 20px rgba(6,182,212,0.02); }
+        .line-glow { box-shadow: 0 0 8px rgba(6,182,212,0.6); }
+      `}</style>
 
-      {/* Enhanced Navigation */}
-      <nav className={`fixed w-full z-50 transition-all duration-500 ${isScrolled ? 'bg-slate-900/90 backdrop-blur-xl shadow-2xl shadow-purple-500/10 border-b border-purple-500/20' : 'bg-transparent'}`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3 group cursor-pointer" onClick={() => scrollToSection('home')}>
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 blur-lg opacity-50 group-hover:opacity-70 transition-opacity"></div>
-                <div className="relative text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent group-hover:scale-110 transition-transform">
-                  CSZ
-                </div>
+      <ParticleField />
+      <div className="fixed inset-0 grid-bg pointer-events-none z-0 opacity-60"></div>
+      <div className="fixed inset-0 noise pointer-events-none z-0"></div>
+      <div className="fixed top-1/4 -left-40 w-96 h-96 bg-violet-600/8 rounded-full blur-3xl pointer-events-none z-0 animate-glow-pulse"></div>
+      <div className="fixed bottom-1/3 -right-40 w-80 h-80 bg-cyan-600/8 rounded-full blur-3xl pointer-events-none z-0 animate-glow-pulse" style={{ animationDelay: '1.5s' }}></div>
+      <div className="fixed top-2/3 left-1/3 w-64 h-64 bg-emerald-600/5 rounded-full blur-3xl pointer-events-none z-0 animate-glow-pulse" style={{ animationDelay: '3s' }}></div>
+      <div
+        className="fixed w-64 h-64 rounded-full pointer-events-none z-0 transition-all duration-700 ease-out"
+        style={{ background: 'radial-gradient(circle, rgba(6,182,212,0.04) 0%, transparent 70%)', left: mousePos.x - 128, top: mousePos.y - 128 }}
+      ></div>
+
+      {/* ── NAVIGATION ── */}
+      <nav className={`fixed w-full z-50 transition-all duration-500 ${isScrolled ? 'bg-[#050B17]/90 backdrop-blur-xl border-b border-slate-800/80' : ''}`}>
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex items-center justify-between h-16">
+            <button onClick={() => scrollTo('home')} className="group flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full overflow-hidden border border-cyan-400/40 flex items-center justify-center bg-slate-900/60">
+                <img
+                  src={SiewZhenImg}
+                  alt="Chong Siew Zhen"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <div className="ml-3 text-sm text-purple-300 italic hidden sm:block font-light group-hover:text-purple-200 transition-colors">
-                Imperfectly Perfect
-              </div>
-            </div>
-            
-            {/* Desktop Menu */}
-            <div className="hidden md:flex space-x-1">
-              {['home', 'journey', 'projects', 'skills', 'achievements', 'contact'].map((item) => (
+              <span className="font-mono text-sm text-slate-300 group-hover:text-cyan-400 transition-colors">
+                Chong Siew Zhen
+              </span>
+            </button>
+
+            <div className="hidden md:flex items-center gap-1">
+              {navItems.map(item => (
                 <button
                   key={item}
-                  onClick={() => scrollToSection(item)}
-                  className={`relative px-4 py-2 rounded-xl capitalize transition-all duration-300 group ${
-                    activeSection === item 
-                      ? 'bg-gradient-to-r from-purple-500/30 to-pink-500/30 text-purple-300 shadow-lg shadow-purple-500/20' 
-                      : 'hover:bg-purple-500/10 hover:text-purple-300'
-                  }`}
+                  onClick={() => scrollTo(item)}
+                  className={`px-4 py-2 text-sm font-mono rounded-lg transition-all duration-200 capitalize tracking-wide
+                    ${activeSection === item
+                      ? 'text-cyan-400 bg-cyan-500/10 border border-cyan-500/20'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'}`}
                 >
-                  <span className="relative z-10">{item}</span>
-                  {activeSection === item && (
-                    <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-xl animate-pulse"></div>
-                  )}
+                  {activeSection === item && <span className="text-cyan-600 mr-1">/</span>}{item}
                 </button>
               ))}
             </div>
 
-            {/* Mobile Menu Button */}
-            <button 
-              className="md:hidden p-2 rounded-xl hover:bg-purple-500/20 transition-all group"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              <div className="relative">
-                {isMenuOpen ? (
-                  <X className="text-purple-400 group-hover:text-pink-400 transition-colors" />
-                ) : (
-                  <Menu className="text-purple-400 group-hover:text-pink-400 transition-colors" />
-                )}
-              </div>
-            </button>
+            <div className="flex items-center gap-3">
+              <a href="mailto:chong.zhen@graduate.utm.my" className="hidden md:flex items-center gap-2 px-4 py-2 border border-cyan-500/40 rounded-lg text-sm text-cyan-400 hover:bg-cyan-500/10 transition-all font-mono">
+                <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></span>
+                Open to work
+              </a>
+              <button className="md:hidden p-2 text-slate-400 hover:text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Enhanced Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden bg-slate-900/95 backdrop-blur-xl border-t border-purple-500/20 animate-slide-down">
-            <div className="px-2 pt-2 pb-3 space-y-1">
-              {['home', 'journey', 'projects', 'skills', 'achievements', 'contact'].map((item) => (
-                <button
-                  key={item}
-                  onClick={() => scrollToSection(item)}
-                  className={`block w-full text-left px-4 py-3 capitalize rounded-xl transition-all duration-300 group ${
-                    activeSection === item 
-                      ? 'bg-gradient-to-r from-purple-500/30 to-pink-500/30 text-purple-300' 
-                      : 'hover:bg-purple-500/10 text-gray-300'
-                  }`}
-                >
-                  <span className="flex items-center">
-                    <div className={`w-2 h-2 rounded-full mr-3 transition-all ${
-                      activeSection === item ? 'bg-purple-400 animate-pulse' : 'bg-gray-500 group-hover:bg-purple-400'
-                    }`}></div>
-                    {item}
-                  </span>
-                </button>
-              ))}
-            </div>
+          <div className="md:hidden bg-[#050B17]/98 backdrop-blur-xl border-t border-slate-800">
+            {navItems.map(item => (
+              <button
+                key={item}
+                onClick={() => scrollTo(item)}
+                className={`block w-full text-left px-6 py-4 font-mono text-sm capitalize transition-colors ${activeSection === item ? 'text-cyan-400 bg-cyan-500/5' : 'text-slate-400'}`}
+              >
+                {activeSection === item && '▸ '}{item}
+              </button>
+            ))}
           </div>
         )}
       </nav>
 
-      {/* Enhanced Hero Section */}
-      <section id="home" className="relative min-h-screen flex items-center justify-center px-4 pt-16 overflow-hidden">
-        <div className="max-w-5xl mx-auto text-center relative z-10">
-          {/* Enhanced Welcome Badge */}
-          <div className="inline-flex items-center space-x-2 mb-8 px-6 py-3 bg-gradient-to-r from-purple-500/20 to-pink-500/20 rounded-full border border-purple-500/30 backdrop-blur-sm animate-bounce-slow hover:scale-105 transition-transform cursor-pointer">
-            <Sparkles className="text-purple-400 animate-pulse" size={20} />
-            <span className="text-purple-300 text-sm font-medium">Welcome to my portfolio</span>
-            <Sparkles className="text-pink-400 animate-pulse" size={20} />
-          </div>
-
-          {/* Enhanced Profile Avatar */}
-          <div className="mb-8 relative inline-block group">
-            {/* Orbital Rings */}
-            <div className="absolute inset-0 animate-spin-slow">
-              <div className="absolute inset-8 border-2 border-purple-400/30 rounded-full animate-pulse"></div>
-            </div>
-            {/* Outer Glow */}
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-2xl opacity-30 group-hover:opacity-50 transition-opacity"></div>
-            {/* Profile Image */}
-            <div className="relative w-40 h-40 mx-auto rounded-full bg-gradient-to-br from-purple-500 via-pink-500 to-purple-500 flex items-center justify-center text-7xl border-4 border-purple-400/30 shadow-2xl animate-float group-hover:scale-110 transition-transform duration-300">
-              👋
-            </div>
-            {/* Floating Elements */}
-            <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full animate-bounce shadow-lg"></div>
-            <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-400 rounded-full animate-bounce shadow-lg delay-300"></div>
-          </div>
-
-          {/* Enhanced Main Heading */}
-          <div className="mb-6">
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 animate-gradient bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent leading-tight">
-              Hi, I'm <span className="animate-wave inline-block hover:scale-110 transition-transform">Chong Siew Zhen</span>
-            </h1>
-          </div>
-
-          {/* Enhanced Subtitle */}
-          <div className="relative inline-block mb-6 animate-slide-up group">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-500/30 to-pink-500/30 blur-xl group-hover:blur-2xl transition-all opacity-50"></div>
-            <p className="relative text-2xl md:text-3xl text-gray-200 font-light px-6 py-2 animate-glow group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-purple-400 group-hover:to-pink-400 group-hover:bg-clip-text transition-all">
-              Software Engineering Student @ UTM
-            </p>
-          </div>
-
-          {/* Enhanced Stats */}
-          <div className="flex flex-wrap items-center justify-center gap-4 mb-8 text-lg animate-stagger">
-            {[
-              { icon: Star, text: "CGPA: 3.96", color: "purple" },
-              { icon: Briefcase, text: "Full-Stack Developer", color: "pink" },
-              { icon: Zap, text: "Open for Projects", color: "purple" }
-            ].map((stat, index) => (
-              <div key={index} className="animate-slide-up" style={{ animationDelay: `${index * 0.1}s` }}>
-                <span className={`px-4 py-2 bg-${stat.color}-500/20 rounded-full border border-${stat.color}-500/30 backdrop-blur-sm hover:bg-${stat.color}-500/30 transition-all duration-300 hover:scale-105 hover:shadow-lg group flex items-center`}>
-                  <stat.icon className={`inline mr-2 text-${stat.color}-400 group-hover:animate-bounce`} size={18} />
-                  {stat.text}
-                </span>
+      {/* ── HERO ── */}
+      <section id="home" className="relative min-h-screen flex flex-col justify-center px-6 pt-20">
+        <div className="max-w-6xl mx-auto w-full">
+          <div className={`transition-all duration-1000 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <div className="flex items-center gap-3 mb-8">
+              <div className="flex gap-1.5">
+                <div className="w-2.5 h-2.5 bg-rose-400 rounded-full"></div>
+                <div className="w-2.5 h-2.5 bg-amber-400 rounded-full"></div>
+                <div className="w-2.5 h-2.5 bg-emerald-400 rounded-full"></div>
               </div>
-            ))}
-          </div>
-
-          {/* Enhanced Social Links - Simplified */}
-          <div className="flex justify-center space-x-4 mb-12 animate-slide-up" style={{ animationDelay: '0.4s' }}>
-            {/* Email */}
-            <a 
-              href="mailto:chong.zhen@graduate.utm.my"
-              className="group relative p-4 bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 rounded-full transition-all transform hover:scale-110 hover:shadow-xl hover:shadow-purple-500/50 animate-float"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-400/20 to-pink-400/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <Mail size={24} className="relative group-hover:animate-bounce" />
-            </a>
-
-            {/* LinkedIn */}
-            <a 
-              href="https://linkedin.com/in/chongsiewzhen"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative p-4 bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 rounded-full transition-all transform hover:scale-110 hover:shadow-xl hover:shadow-blue-500/50 animate-float"
-              style={{ animationDelay: '0.1s' }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-cyan-400/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <Linkedin size={24} className="relative group-hover:animate-bounce" />
-            </a>
-
-            {/* GitHub - Enhanced visibility */}
-            <a 
-              href="https://github.com/ChongSZ7279"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group relative p-4 bg-gradient-to-br from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 rounded-full transition-all transform hover:scale-110 hover:shadow-xl hover:shadow-gray-500/50 animate-float"
-              style={{ animationDelay: '0.2s' }}
-            >
-              {/* Make the background more visible by reducing opacity on the gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-500/30 to-gray-600/30 rounded-full opacity-60 group-hover:opacity-100 transition-opacity"></div>
-              <Github size={24} className="relative group-hover:animate-bounce text-white" />
-            </a>
-          </div>
-
-          {/* Enhanced Scroll Indicator */}
-          <div className="flex justify-center w-full">
-            <button 
-              onClick={() => scrollToSection('journey')} 
-              className="animate-bounce-slow hover:animate-none transition-all group flex flex-col items-center"
-            >
-              <div className="relative w-12 h-12 flex items-center justify-center">
-                <div className="absolute inset-0 bg-purple-400 rounded-full blur-md group-hover:blur-lg transition-all opacity-50"></div>
-                <ChevronDown size={40} className="relative text-purple-400 hover:text-pink-400 group-hover:scale-110 transition-transform" />
-              </div>
-              <div className="mt-2 text-sm text-purple-300 opacity-0 group-hover:opacity-100 transition-opacity">
-                Explore my journey
-              </div>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Enhanced Growth Journey Section */}
-      <section id="journey" className="relative min-h-screen py-20 px-4">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/10 to-transparent"></div>
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-16 group">
-            <div className="flex items-center justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
-                <TrendingUp className="relative text-purple-400 group-hover:scale-110 transition-transform" size={36} />
+              <span className="text-xs font-mono text-slate-500">portfolio_v2026 — process running</span>
             </div>
-            </div>
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent mb-4 group-hover:scale-105 transition-transform">
-              My Growth Journey
-            </h2>
-            <p className="text-xl text-gray-300 text-center mb-16 max-w-3xl mx-auto font-light">
-              Every step in my journey represents learning, iteration, and growth. Here's how I've evolved as a developer.
-            </p>
-          </div>
 
-          
-          {/* Enhanced Timeline */}
-          <div className="relative">
-            <div className="absolute left-6 md:left-1/2 transform md:-translate-x-1/2 w-1 h-full bg-gradient-to-b from-purple-500 via-pink-500 to-purple-500 rounded-full opacity-30"></div>
-            
-            <div className="space-y-8 pl-12 md:pl-0">
-              {growthTimeline.map((item, idx) => (
-                <div key={idx} className="relative group">
-                  <div className="absolute -left-9 md:left-1/2 transform md:-translate-x-1/2 z-20">
-                    <div className="w-6 h-6 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full border-4 border-slate-900 shadow-lg shadow-purple-500/50 group-hover:scale-125 transition-transform"></div>
-                    <div className="absolute inset-0 w-6 h-6 bg-purple-400 rounded-full animate-ping opacity-20"></div>
-                  </div>
-                  
-                  <div className="group relative bg-slate-800/30 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/20 hover:scale-105">
-                    <div className="absolute -top-3 -left-3 group-hover:scale-110 transition-transform">
-                      <div className="px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-sm font-bold shadow-lg">
-                        {item.year}
-                      </div>
-                    </div>
-                    
-                    <h3 className="text-xl font-bold mb-3 text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-purple-400 group-hover:to-pink-400 group-hover:bg-clip-text transition-all">
-                      {item.event}
-                    </h3>
-                    <p className="text-gray-300 italic leading-relaxed group-hover:text-gray-200 transition-colors">{item.learning}</p>
-                  </div>
+            <div className="mb-8">
+              <div className="text-sm font-mono text-cyan-400 mb-3 tracking-widest">$ init —name="Chong Siew Zhen"</div>
+              <h1 className="font-display text-6xl md:text-8xl lg:text-9xl font-black leading-none mb-2">
+                <span className="text-gradient">CHONG</span>
+              </h1>
+              <h1 className="font-display text-6xl md:text-8xl lg:text-9xl font-black leading-none text-white/10 mb-4">
+                SIEW ZHEN
+              </h1>
+              <p className="text-lg md:text-2xl font-mono text-slate-300">
+                Full-Stack Developer <span className="text-cyan-400">|</span> AI &amp; Blockchain Innovator
+              </p>
+            </div>
+
+            <div className="text-sm md:text-base text-slate-400 font-mono mb-6 h-5">
+              <TypeWriter strings={['Hackathon Competitor', 'Robotics Champion', 'System-Focused Engineer', 'Builder of Scalable Real-World Apps']} />
+            </div>
+
+            <div className="flex flex-wrap gap-4 mb-16">
+              <button onClick={() => scrollTo('projects')} className="group flex items-center gap-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/30 text-sm">
+                View Projects
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </button>
+              <button onClick={() => scrollTo('contact')} className="group flex items-center gap-2 px-6 py-3 border border-slate-700 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 rounded-xl transition-all duration-200 text-sm">
+                Contact Me
+                <Mail size={14} />
+              </button>
+              <a href="https://github.com/ChongSZ7279" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-5 py-3 border border-slate-800 hover:border-slate-600 text-slate-500 hover:text-slate-300 rounded-xl transition-all text-sm">
+                <Github size={16} /> GitHub
+              </a>
+            </div>
+
+            <div className="flex flex-wrap gap-8 border-t border-slate-800 pt-8">
+              {[
+                { n: 3.96, s: '', label: 'CGPA' },
+                { n: 6, s: '+', label: 'Awards' },
+                { n: 4, s: '+', label: 'Projects' },
+                { n: 15, s: '+', label: 'Technologies' },
+              ].map(({ n, s, label }) => (
+                <div key={label}>
+                  <div className="text-2xl font-black text-white font-display"><Counter end={n} suffix={s} /></div>
+                  <div className="text-xs text-slate-500 font-mono tracking-widest uppercase mt-0.5">{label}</div>
                 </div>
               ))}
             </div>
           </div>
-
-          {/* Enhanced Summary Card */}
-          <div className="text-center mt-16 group">
-            <div className="relative bg-gradient-to-br from-purple-900/30 via-slate-800/30 to-pink-900/30 rounded-2xl p-8 backdrop-blur-sm border border-purple-500/20 hover:border-purple-500/50 transition-all duration-300 group-hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative">
-                <Heart className="mx-auto mb-4 text-pink-400 group-hover:scale-110 transition-transform" size={32} />
-                <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-4 group-hover:scale-105 transition-transform">
-                  Summary
-                </h3>
-                <p className="text-gray-300 text-lg max-w-2xl mx-auto leading-relaxed group-hover:text-gray-200 transition-colors">
-                  A concise overview of my skills, experiences, and achievements, highlighting what I bring to the table 
-                  in building full-stack projects and real-world applications.
-                </p>
-                <div className="flex flex-wrap justify-center gap-4 mt-6">
-                  {["🚀 Fast Learner", "💡 Problem Solver", "⚡ Production Ready"].map((badge, index) => (
-                    <span 
-                      key={index}
-                      className="px-4 py-2 bg-purple-500/20 rounded-full border border-purple-500/30 text-purple-300 text-sm hover:bg-purple-500/30 hover:scale-105 transition-all"
-                    >
-                      {badge}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Enhanced Projects Section */}
-      <section id="projects" className="relative min-h-screen py-20 px-4">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/10 to-transparent"></div>
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-16 group">
-            <div className="flex items-center justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
-                <Code className="relative text-purple-400 group-hover:scale-110 transition-transform" size={48} />
-              </div>
-            </div>
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent mb-4 group-hover:scale-105 transition-transform">
-              Featured Projects
-            </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto font-light group-hover:text-gray-200 transition-colors">
-              Some of the projects I've built to solve real-world problems and showcase my skills in web and software development
-            </p>
-          </div>
-
-          
-          <div className="grid md:grid-cols-2 gap-8  mb-12">
-            {projects.map((project, idx) => (
-              <div 
-                key={idx} 
-                className="group relative bg-slate-800/30 backdrop-blur-sm rounded-2xl overflow-hidden border border-purple-500/20 hover:border-purple-500/50 transition-all duration-500 hover:transform hover:scale-[1.02] hover:shadow-2xl hover:shadow-purple-500/20"
-              >
-                <div className="relative h-48 overflow-hidden">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${project.color} opacity-80`}></div>
-                  <img 
-                    src={project.image} 
-                    alt={project.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
-                </div>
-
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-2xl font-bold text-transparent bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text group-hover:scale-105 transition-transform">
-                      {project.title}
-                    </h3>
-                    <Zap className="text-yellow-400 group-hover:animate-pulse group-hover:scale-110 transition-transform" size={24} />
-                  </div>
-                  
-                  <p className="text-gray-300 mb-4 leading-relaxed group-hover:text-gray-200 transition-colors">{project.desc}</p>
-                  
-                  <div className="mb-4">
-                    <h4 className="text-lg font-semibold text-purple-300 mb-2 flex items-center group-hover:text-purple-200 transition-colors">
-                      <TrendingUp size={18} className="mr-2 group-hover:scale-110 transition-transform" />
-                      Development Journey:
-                    </h4>
-                    <ul className="text-sm text-gray-400 space-y-2">
-                      {project.journey.map((step, i) => (
-                        <li key={i} className="flex items-start group/item hover:text-gray-300 transition-colors">
-                          <ArrowRight size={16} className="text-purple-400 mr-2 mt-1 flex-shrink-0 group-hover/item:scale-110 transition-transform" />
-                          {step}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className="mb-4 p-4 bg-gradient-to-br from-purple-900/40 to-pink-900/40 rounded-xl backdrop-blur-sm border border-purple-500/20 group-hover:border-purple-500/40 transition-colors">
-                    <h4 className="text-sm font-semibold text-purple-300 mb-2 flex items-center">
-                      <Sparkles size={16} className="mr-2 group-hover:animate-pulse" />
-                      Key Growth:
-                    </h4>
-                    <p className="text-sm text-gray-300 leading-relaxed group-hover:text-gray-200">{project.growth}</p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {project.tech.map((tech, i) => (
-                      <span 
-                        key={i} 
-                        className="px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-full text-sm hover:bg-purple-500/30 hover:scale-105 transition-all group/tech"
-                      >
-                        <span className="group-hover/tech:text-purple-300 transition-colors">{tech}</span>
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex space-x-4">
-                    <a 
-                      href={project.link} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="flex items-center text-purple-400 hover:text-purple-300 transition-all group/link hover:scale-105"
-                    >
-                      <Github size={20} className="mr-2 group-hover/link:animate-pulse" />
-                      <span className="border-b border-transparent group-hover/link:border-purple-400">Code</span>
-                    </a>
-                    <a 
-                      href={project.demo} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="flex items-center text-pink-400 hover:text-pink-300 transition-all group/link hover:scale-105"
-                    >
-                      <ExternalLink size={20} className="mr-2 group-hover/link:animate-pulse" />
-                      <span className="border-b border-transparent group-hover/link:border-pink-400">Demo</span>
-                    </a>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          {/* Enhanced Featured Projects Summary */}
-          <div className="text-center group">
-            <div className="relative bg-gradient-to-br from-purple-900/40 via-slate-800/40 to-pink-900/40 rounded-3xl p-8 backdrop-blur-xl border border-purple-500/30 hover:border-purple-400/60 transition-all duration-500 group-hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative">
-                <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-4 group-hover:scale-105 transition-transform">
-                  Featured Projects
-                </h3>
-                <p className="text-gray-300 text-lg max-w-2xl mx-auto leading-relaxed group-hover:text-gray-200 transition-colors">
-                  A selection of projects I’ve built to tackle real-world problems, demonstrate my skills, 
-                  and showcase creative solutions using modern technologies.
-                </p>
-                <div className="flex flex-wrap justify-center gap-4 mt-6">
-                  {["💻 Web Development", "📱 Mobile Apps", "🛠 Full-Stack Solutions"].map((badge, index) => (
-                    <span 
-                      key={index}
-                      className="px-4 py-2 bg-purple-500/20 rounded-full border border-purple-500/30 text-purple-300 text-sm hover:bg-purple-500/30 hover:scale-105 transition-all"
-                    >
-                      {badge}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
 
+        <button onClick={() => scrollTo('about')} className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-slate-600 hover:text-slate-400 transition-colors group">
+          <span className="text-xs font-mono tracking-widest">SCROLL</span>
+          <ChevronDown size={16} className="animate-bounce" />
+        </button>
       </section>
 
-      {/* Enhanced Skills Section */}
-      <section id="skills" className="relative min-h-screen py-20 px-4">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-900/10 to-transparent"></div>
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-16 group">
-            <div className="flex items-center justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
-                <Briefcase className="relative text-purple-400 group-hover:scale-110 transition-transform" size={48} />
-              </div>
-            </div>
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent mb-4 group-hover:scale-105 transition-transform">
-              Tech Stack
-            </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto font-light group-hover:text-gray-200 transition-colors">
-              Technologies I've mastered through building real-world projects and continuous learning
-            </p>
-          </div>
+      {/* ── WORLD OF TIME SIDE RAIL ── */}
+      <WorldOfTimeButton onClick={() => navigate('/journey')} />
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8 mb-12">
-            {Object.entries(skills).map(([category, items], categoryIndex) => (
-              <div 
-                key={category}
-                className="group relative"
-                style={{ animationDelay: `${categoryIndex * 100}ms` }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                
-                <div className="relative bg-slate-800/40 backdrop-blur-xl rounded-3xl p-8 border border-purple-500/30 hover:border-purple-400/60 transition-all duration-500 group-hover:transform group-hover:scale-105 group-hover:shadow-2xl group-hover:shadow-purple-500/30">
-                  <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center space-x-4">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur-md opacity-50 group-hover:opacity-70 transition-opacity"></div>
-                        <div className="relative w-14 h-14 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                          {getCategoryIcon(category)}
-                        </div>
-                      </div>
-                      <div>
-                        <h3 className="text-2xl font-bold text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-purple-400 group-hover:to-pink-400 group-hover:bg-clip-text transition-all">
-                          {category}
-                        </h3>
-                        <div className="flex items-center space-x-2 mt-1">
-                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse group-hover:scale-150 transition-transform"></div>
-                          <span className="text-sm text-gray-400 group-hover:text-gray-300 transition-colors">{items.length} technologies</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+      {/* ── MOBILE JOURNEY CTA ── */}
+      <button
+        onClick={() => navigate('/journey')}
+        className="lg:hidden fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-3 rounded-2xl text-sm font-semibold active:scale-95 transition-all duration-200"
+        style={{
+          background: "linear-gradient(135deg, rgba(6,182,212,0.95) 0%, rgba(99,102,241,0.92) 60%, rgba(236,72,153,0.85) 100%)",
+          color: "#050B17",
+          boxShadow: "0 18px 40px -14px rgba(6,182,212,0.55), 0 0 0 1px rgba(6,182,212,0.15)",
+        }}
+        aria-label="Open Journey (World of Time)"
+      >
+        <span className="font-mono tracking-wide">Journey</span>
+        <ArrowRight size={16} />
+      </button>
 
-                  <div className="grid gap-4">
-                    {items.map((skill, skillIndex) => (
-                      <div
-                        key={skill}
-                        className="group/item relative bg-slate-700/30 rounded-2xl p-4 border border-purple-500/10 hover:border-purple-400/40 transition-all duration-300 hover:transform hover:scale-105 hover:shadow-lg hover:shadow-purple-500/20"
-                        style={{ animationDelay: `${skillIndex * 50}ms` }}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="relative">
-                              <div className="absolute inset-0 bg-purple-500 rounded-xl blur-sm opacity-0 group-hover/item:opacity-50 transition-opacity"></div>
-                              <img 
-                                src={getTechLogo(skill)} 
-                                alt={skill} 
-                                className="relative w-10 h-10 group-hover/item:scale-110 group-hover/item:rotate-3 transition-transform duration-300" 
-                              />
-                            </div>
-                            
-                            <div>
-                              <span className="text-lg font-semibold text-white group-hover/item:text-transparent group-hover/item:bg-gradient-to-r group-hover/item:from-purple-400 group-hover/item:to-pink-400 group-hover/item:bg-clip-text transition-all">
-                                {skill}
-                              </span>
-                              <div className="flex items-center space-x-2 mt-1">
-                                <div className="w-1 h-1 bg-purple-400 rounded-full group-hover/item:scale-150 transition-transform"></div>
-                                <span className="text-xs text-gray-400 group-hover/item:text-gray-300 transition-colors">{getTechType(skill)}</span>
-                              </div>
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center space-x-2 opacity-0 group-hover/item:opacity-100 transform translate-x-2 group-hover/item:translate-x-0 transition-all duration-300">
-                            <div className="flex space-x-1">
-                              {[1, 2, 3].map((dot) => (
-                                <div
-                                  key={dot}
-                                  className={`w-2 h-2 rounded-full transition-all ${
-                                    dot <= getProficiencyLevel(skill) 
-                                      ? 'bg-green-400 group-hover/item:scale-125' 
-                                      : 'bg-gray-600'
-                                  }`}
-                                ></div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-purple-400 to-pink-400 group-hover/item:w-full transition-all duration-500"></div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* ── ABOUT ME ── */}
+      <AboutMe onExploreProjects={() => scrollTo('projects')} />
 
-          {/* Enhanced Tech Stack Summary */}
-          <div className="text-center group">
-            <div className="relative bg-gradient-to-br from-purple-900/40 via-slate-800/40 to-pink-900/40 rounded-3xl p-8 backdrop-blur-xl border border-purple-500/30 hover:border-purple-400/60 transition-all duration-500 group-hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative">
-                <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-4 group-hover:scale-105 transition-transform">
-                  Full-Stack Capabilities
-                </h3>
-                <p className="text-gray-300 text-lg max-w-2xl mx-auto leading-relaxed group-hover:text-gray-200 transition-colors">
-                  From frontend interfaces to backend systems and databases, I build complete, scalable solutions 
-                  with modern technologies and best practices.
-                </p>
-                <div className="flex flex-wrap justify-center gap-4 mt-6">
-                  {["🚀 15+ Technologies", "💡 Continuous Learning", "⚡ Production Ready"].map((badge, index) => (
-                    <span 
-                      key={index}
-                      className="px-4 py-2 bg-purple-500/20 rounded-full border border-purple-500/30 text-purple-300 text-sm hover:bg-purple-500/30 hover:scale-105 transition-all"
-                    >
-                      {badge}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ── TECH STACK ── */}
+      <TechStack />
 
-      {/* Enhanced Achievements Section */}
-      <section id="achievements" className="relative min-h-screen py-20 px-4">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-transparent"></div>
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-16 group">
-            <div className="flex items-center justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
-                <Award className="relative text-purple-400 group-hover:scale-110 transition-transform" size={48} />
-              </div>
-            </div>
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent mb-4 group-hover:scale-105 transition-transform">
-              Achievements
-            </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto font-light group-hover:text-gray-200 transition-colors">
-              Recognitions that celebrate innovation, problem-solving, and technical excellence
-            </p>
-          </div>
+      {/* ── PROJECTS & ACHIEVEMENTS ── */}
+      <ProjectsAndAchievements />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-            {achievements.map((achievement, index) => (
-              <div 
-                key={index}
-                className="group relative"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-pink-500/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
-                
-                <div className="relative h-full bg-slate-800/40 backdrop-blur-xl rounded-3xl overflow-hidden border border-purple-500/30 hover:border-purple-400/60 transition-all duration-500 group-hover:transform group-hover:scale-105 group-hover:shadow-2xl group-hover:shadow-purple-500/30">
-                  
-                  <div className="relative h-32 overflow-hidden">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${achievement.color} opacity-80`}></div>
-                    <img 
-                      src={achievement.image} 
-                      alt={achievement.event}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
-                    
-                    <div className="absolute top-4 left-4 group-hover:scale-110 transition-transform">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl blur-md opacity-50"></div>
-                        <div className="relative w-12 h-12 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg text-xl">
-                          {achievement.icon}
-                        </div>
-                      </div>
-                    </div>
+      {/* ── CONTACT ── */}
+      <section id="contact" className="relative py-32 px-6">
+        <div className="max-w-3xl mx-auto text-center">
+          <SectionHeader
+            align="center"
+            label="get in touch"
+            title={
+              <>
+                Let's Build
+                <br />
+                <span className="text-gradient-cyan">Something Real</span>
+              </>
+            }
+            subtitle={
+              "I'm open to internships, hackathon collaborations, research opportunities, or just interesting conversations about AI, Web3, and systems design."
+            }
+            className="mb-12"
+          />
 
-                    <div className="absolute top-4 right-4 group-hover:scale-110 transition-transform">
-                      <div className={`px-3 py-1 rounded-full text-xs font-bold backdrop-blur-sm ${
-                        achievement.title.includes("Champion") 
-                          ? "bg-gradient-to-r from-yellow-500/30 to-yellow-600/30 border border-yellow-500/50 text-yellow-300"
-                          : achievement.title.includes("Bronze")
-                          ? "bg-gradient-to-r from-amber-500/30 to-amber-600/30 border border-amber-500/50 text-amber-300"
-                          : "bg-gradient-to-r from-purple-500/30 to-pink-500/30 border border-purple-500/50 text-purple-300"
-                      }`}>
-                        {achievement.title}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-6 space-y-4">
-                    <h3 className="text-xl font-bold text-white group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-purple-400 group-hover:to-pink-400 group-hover:bg-clip-text transition-all leading-tight">
-                      {achievement.event}
-                    </h3>
-                    
-                    <div className="bg-slate-700/30 rounded-2xl p-4 border border-purple-500/10 group-hover:border-purple-400/30 transition-all duration-300 group-hover:scale-105">
-                      <div className="flex items-start space-x-3">
-                        <Sparkles className="text-purple-400 mt-1 flex-shrink-0 group-hover:animate-pulse" size={18} />
-                        <div>
-                          <p className="text-sm font-semibold text-purple-300 mb-1 group-hover:text-purple-200">Key Learning</p>
-                          <p className="text-gray-300 text-sm leading-relaxed group-hover:text-gray-200">{achievement.learning}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between text-sm text-gray-400 group-hover:text-gray-300 transition-colors">
-                      <div className="flex items-center space-x-2">
-                        <Zap className="text-pink-400 group-hover:scale-110 transition-transform" size={16} />
-                        <span>Project Experience</span>
-                      </div>
-                      <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse group-hover:scale-150 transition-transform"></div>
-                    </div>
-                  </div>
-
-                  <div className="absolute bottom-0 left-0 w-0 h-1 bg-gradient-to-r from-purple-400 to-pink-400 group-hover:w-full transition-all duration-700"></div>
-                  
-                  <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-purple-400/50 rounded-tr-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-pink-400/50 rounded-bl-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Enhanced Achievements Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <div className="grid sm:grid-cols-3 gap-4 mb-12">
             {[
-              { number: "2x", text: "Champion Titles", color: "purple" },
-              { number: "6+", text: "Total Awards", color: "pink" },
-              { number: "4", text: "Different Domains", color: "gradient" }
-            ].map((stat, index) => (
-              <div 
-                key={index}
-                className={`bg-gradient-to-br from-${stat.color === 'gradient' ? 'purple-500/10 to-pink-500/10' : `${stat.color}-500/10 to-transparent`} rounded-2xl p-6 border border-${stat.color === 'gradient' ? 'purple' : stat.color}-500/20 text-center group hover:border-${stat.color === 'gradient' ? 'purple' : stat.color}-400/40 transition-all hover:scale-105`}
-              >
-                <div className={`text-3xl font-bold ${
-                  stat.color === 'gradient' 
-                    ? 'bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent'
-                    : `text-${stat.color}-400`
-                } mb-2 group-hover:scale-110 transition-transform`}>
-                  {stat.number}
+              { icon: Mail, label: 'Email', value: 'chong.zhen@graduate.utm.my', href: 'mailto:chong.zhen@graduate.utm.my', color: 'violet' },
+              { icon: Linkedin, label: 'LinkedIn', value: 'chongsiewzhen', href: 'https://www.linkedin.com/in/chong-siew-zhen-29b236257/', color: 'cyan' },
+              { icon: Github, label: 'GitHub', value: 'ChongSZ7279', href: 'https://github.com/ChongSZ7279', color: 'slate' },
+            ].map(({ icon: Icon, label, value, href }) => (
+              <a key={label} href={href} target="_blank" rel="noopener noreferrer"
+                className="group flex flex-col items-center gap-3 p-6 bg-slate-900/50 border border-slate-800 hover:border-slate-600 rounded-2xl transition-all duration-300 hover:bg-slate-900">
+                <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Icon size={18} className="text-slate-300 group-hover:text-cyan-400 transition-colors" />
                 </div>
-                <div className="text-gray-300 group-hover:text-gray-200 transition-colors">{stat.text}</div>
-              </div>
-            ))}
-          </div>
-
-          {/* Enhanced Inspirational Quote */}
-          <div className="text-center group">
-            <div className="relative bg-gradient-to-br from-purple-900/40 via-slate-800/40 to-pink-900/40 rounded-3xl p-8 backdrop-blur-xl border border-purple-500/30 hover:border-purple-400/60 transition-all duration-500 group-hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative">
-                <div className="flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                  <Award className="text-purple-400 mr-3 group-hover:animate-pulse" size={32} />
-                  <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    Beyond the Trophy
-                  </h3>
+                <div>
+                  <div className="text-xs font-mono text-slate-500 mb-1 uppercase tracking-widest">{label}</div>
+                  <div className="text-sm text-slate-300 group-hover:text-white transition-colors truncate">{value}</div>
                 </div>
-                <p className="text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed italic group-hover:text-gray-200 transition-colors">
-                  "Every achievement represents countless hours of learning, iteration, and growth. 
-                  The real victory is in the skills gained and problems solved along the way."
-                </p>
-                <div className="flex flex-wrap justify-center gap-4 mt-6">
-                  {["🏆 Competition Excellence", "💡 Innovative Solutions", "🚀 Real-world Impact"].map((badge, index) => (
-                    <span 
-                      key={index}
-                      className="px-4 py-2 bg-purple-500/20 rounded-full border border-purple-500/30 text-purple-300 text-sm hover:bg-purple-500/30 hover:scale-105 transition-all"
-                    >
-                      {badge}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Enhanced Contact Section */}
-      <section id="contact" className="relative min-h-screen py-20 px-4 flex items-center">
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-900/50 to-transparent"></div>
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-16 group">
-            <div className="flex items-center justify-center mb-6">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full blur-xl opacity-50 group-hover:opacity-70 transition-opacity"></div>
-                <User className="relative text-purple-400 group-hover:scale-110 transition-transform" size={36} />
-              </div>
-            </div>
-            <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 bg-clip-text text-transparent mb-4 group-hover:scale-105 transition-transform">
-              Let's Connect
-            </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto font-light group-hover:text-gray-200 transition-colors">
-              I'm always open to new ideas, collaborations, and opportunities to learn and grow together.
-            </p>
-          </div>
-
-          {/* Get in Touch Summary Card */}
-          <div className="text-center group">
-            <div className="relative bg-gradient-to-br from-purple-900/40 via-slate-800/40 to-pink-900/40 rounded-3xl p-8 backdrop-blur-xl border border-purple-500/30 hover:border-purple-400/60 transition-all duration-500 group-hover:scale-105">
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 to-pink-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div className="relative">
-                {/* Icon + Title */}
-                <div className="flex items-center justify-center mb-6 group-hover:scale-105 transition-transform">
-                  <User className="text-purple-400 mr-3 group-hover:animate-pulse" size={36} />
-                  <h3 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                    Get in Touch
-                  </h3>
-                </div>
-
-                {/* Description */}
-                <p className="text-gray-300 text-lg max-w-2xl mx-auto leading-relaxed mb-6 group-hover:text-gray-200 transition-colors">
-                  I'm always excited to discuss new opportunities, collaborate on interesting projects, 
-                  or connect with fellow developers and innovators.
-                </p>
-
-                {/* Optional Quote */}
-                <p className="text-lg text-gray-400 mb-6 italic font-light group-hover:text-gray-300 transition-colors">
-                  "Code with empathy. Design with purpose. Grow with every iteration."
-                </p>
-
-                {/* Badges (optional, can replace contact buttons) */}
-                <div className="flex flex-wrap justify-center gap-4 mt-6">
-                  {["🤝 Collaboration", "💡 Ideas Exchange", "🚀 Innovative Projects"].map((badge, index) => (
-                    <span 
-                      key={index}
-                      className="px-4 py-2 bg-purple-500/20 rounded-full border border-purple-500/30 text-purple-300 text-sm hover:bg-purple-500/30 hover:scale-105 transition-all"
-                    >
-                      {badge}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-
-          {/* Contact Cards */}
-          <div className="flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-6 mt-8">
-            {[
-              { icon: Mail, text: "Email Me", color: "purple", href: "mailto:chong.zhen@graduate.utm.my" },
-              { icon: Linkedin, text: "LinkedIn", color: "blue", href: "https://linkedin.com/in/chongsiewzhen" },
-              { icon: Github, text: "GitHub", color: "gray", href: "https://github.com/ChongSZ7279", alwaysVisible: true }
-            ].map((button, index) => (
-              <a
-                key={index}
-                href={button.href}
-                target={button.href.startsWith('http') ? '_blank' : '_self'}
-                rel="noopener noreferrer"
-                className={`relative flex items-center px-8 py-4 rounded-2xl transition-all transform hover:scale-105 hover:shadow-2xl
-                  ${button.color === 'purple' ? 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600' : ''}
-                  ${button.color === 'blue' ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600' : ''}
-                  ${button.color === 'gray' ? 'bg-gradient-to-r from-gray-700 to-gray-800' : ''} 
-                  border border-purple-500/20`}
-              >
-                <div className={`absolute inset-0 rounded-2xl 
-                  ${button.alwaysVisible ? 'bg-gradient-to-r from-gray-500/20 to-gray-400/20 opacity-100' : 'bg-gradient-to-r from-purple-400/10 to-pink-400/10 opacity-0 group-hover:opacity-100'} 
-                  transition-opacity`}></div>
-                <button.icon className="mr-3 relative z-10 group-hover:animate-bounce text-white" size={24} />
-                <span className="font-semibold relative z-10 text-white">{button.text}</span>
               </a>
             ))}
           </div>
 
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-emerald-400 text-sm font-mono">
+            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+            Available for collaborations · 2026
+          </div>
         </div>
-
       </section>
 
-      {/* Enhanced Footer */}
-      <footer className="relative py-12 text-center border-t border-purple-500/20 bg-slate-900/50 backdrop-blur-sm">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-6 group">
-            <div className="text-left group-hover:scale-105 transition-transform">
-              <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-2">
-                Chong Siew Zhen
-              </div>
-              <p className="text-purple-300 italic text-sm group-hover:text-purple-200 transition-colors">
-                Imperfectly Perfect: Where Growth Meets Code
-              </p>
+      {/* ── FOOTER ── */}
+      <footer className="border-t border-slate-800 py-8 px-6">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 rounded-full overflow-hidden border border-cyan-400/40 flex items-center justify-center bg-slate-900/60">
+              <img
+                src={SiewZhenImg}
+                alt="Chong Siew Zhen"
+                className="w-full h-full object-cover"
+              />
             </div>
-            <div className="flex space-x-4">
-              {[
-                { icon: Mail, href: "mailto:chong.zhen@graduate.utm.my", color: "purple" },
-                { icon: Linkedin, href: "https://linkedin.com/in/chongsiewzhen", color: "blue" },
-                { icon: Github, href: "https://github.com/ChongSZ7279", color: "gray" }
-              ].map((social, index) => (
-                <a 
-                  key={index}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`p-2 bg-${social.color}-500/20 rounded-lg hover:bg-${social.color}-500/30 transition-all hover:scale-110 group/social`}
-                >
-                  <social.icon size={20} className={`text-${social.color}-300 group-hover/social:animate-bounce`} />
-                </a>
-              ))}
-            </div>
+            <span className="text-slate-500 text-sm font-mono">Chong Siew Zhen <span className="text-slate-700">·</span> UTM Software Engineering <span className="text-slate-700">·</span> CGPA 3.96</span>
           </div>
-          
-          <div className="border-t border-purple-500/20 pt-6 group">
-            <p className="text-gray-400 mb-2 group-hover:text-gray-300 transition-colors">
-              © 2025 Chong Siew Zhen. Built with React & Tailwind CSS.
-            </p>
-            <p className="text-gray-500 text-sm group-hover:text-gray-400 transition-colors">
-              CGPA: 3.96 | UTM Software Engineering | FullStack Developer
-            </p>
-          </div>
+          <p className="text-slate-700 text-xs font-mono">© 2026 · Built with React + Tailwind · Imperfectly Perfect</p>
         </div>
       </footer>
     </div>

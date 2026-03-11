@@ -1,1 +1,49 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Layout rhythm */
+    --page-pad: 1.5rem; /* 24px */
+    --page-pad-md: 2rem; /* 32px */
+    --section-py: 6rem; /* 96px */
+    --section-py-lg: 8rem; /* 128px */
+  }
+}
+
+@layer utilities {
+  .page-x {
+    padding-left: var(--page-pad);
+    padding-right: var(--page-pad);
+  }
+
+  @media (min-width: 768px) {
+    .page-x {
+      padding-left: var(--page-pad-md);
+      padding-right: var(--page-pad-md);
+    }
+  }
+
+  .container-6xl {
+    max-width: 72rem; /* matches Tailwind max-w-6xl */
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
+
+  .container-5xl {
+    max-width: 64rem; /* matches Tailwind max-w-5xl */
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
+
+  .section-y {
+    padding-top: var(--section-py);
+    padding-bottom: var(--section-py);
+  }
+
+  .section-y-lg {
+    padding-top: var(--section-py-lg);
+    padding-bottom: var(--section-py-lg);
+  }
+}
