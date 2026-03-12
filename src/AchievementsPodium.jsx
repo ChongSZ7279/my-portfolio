@@ -24,6 +24,7 @@ import {
   memo,
 } from "react";
 import { createPortal } from "react-dom";
+import SectionHeader from "./components/SectionHeader";
 
 // ─── Utility helpers ─────────────────────────────────────────────────────────
 
@@ -846,7 +847,9 @@ const OtherRow = memo(function OtherRow({ item, index, animate, onOpen }) {
         boxSizing: "border-box",
         width: "100%",
         textAlign: "left",
+        "--ach-accent": accent,
       }}
+      className="ach-other-row"
     >
       <span
         style={{
@@ -865,6 +868,7 @@ const OtherRow = memo(function OtherRow({ item, index, animate, onOpen }) {
 
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
+          className="ach-other-title"
           style={{
             fontSize: 12,
             fontWeight: 800,
@@ -877,7 +881,10 @@ const OtherRow = memo(function OtherRow({ item, index, animate, onOpen }) {
         >
           {item.competition}{item.project ? ` · ${item.project}` : ""}
         </div>
-        <div style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: "#475569", marginTop: 2 }}>
+        <div
+          style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: "#475569", marginTop: 2 }}
+          className="ach-other-achievement"
+        >
           {item.achievement}
         </div>
       </div>
@@ -896,11 +903,15 @@ const OtherRow = memo(function OtherRow({ item, index, animate, onOpen }) {
           background: alpha(accent, "15"),
           border: `1px solid ${alpha(accent, "35")}`,
         }}
+        className="ach-other-tier"
       >
         {item.tier}
       </span>
 
-      <span style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: "#334155", flexShrink: 0 }}>
+      <span
+        style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: "#334155", flexShrink: 0 }}
+        className="ach-other-year"
+      >
         {item.year}
       </span>
     </button>
@@ -978,6 +989,41 @@ export default function AchievementsPodium({ achievements }) {
           }
           .ach-podium-row > div { flex: none !important; }
         }
+
+        /* Mobile: free horizontal space in the "More Recognition" list */
+        @media (max-width: 480px) {
+          .ach-other-tier,
+          .ach-other-year {
+            display: none !important;
+          }
+          .ach-other-row {
+            padding: 12px 14px !important;
+          }
+          .ach-other-title {
+            white-space: normal !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            display: -webkit-box !important;
+            -webkit-line-clamp: 2 !important;
+            -webkit-box-orient: vertical !important;
+          }
+
+          /* Make achievement attribute pop on mobile only */
+          .ach-other-achievement {
+            display: inline-flex !important;
+            align-items: center !important;
+            width: fit-content !important;
+            padding: 3px 10px !important;
+            border-radius: 999px !important;
+            color: var(--ach-accent) !important;
+            background: color-mix(in srgb, var(--ach-accent) 14%, rgba(15,23,42,0.7)) !important;
+            border: 1px solid color-mix(in srgb, var(--ach-accent) 35%, transparent) !important;
+            box-shadow: 0 0 18px -8px color-mix(in srgb, var(--ach-accent) 55%, transparent) !important;
+            letter-spacing: 0.06em !important;
+            text-transform: uppercase !important;
+            font-size: 9px !important;
+          }
+        }
       `}</style>
 
       <section
@@ -988,50 +1034,28 @@ export default function AchievementsPodium({ achievements }) {
         <div style={{ maxWidth: 900, margin: "0 auto", padding: "0 24px" }}>
 
           {/* Section heading */}
-          <div style={{ textAlign: "center", marginBottom: 60 }}>
-            <div
-              style={{
-                display: "inline-block",
-                fontSize: 9,
-                fontFamily: "'JetBrains Mono', monospace",
-                color: "#475569",
-                letterSpacing: "0.2em",
-                textTransform: "uppercase",
-                marginBottom: 14,
-                padding: "4px 14px",
-                borderRadius: 999,
-                border: "1px solid rgba(255,255,255,0.07)",
-                background: "rgba(255,255,255,0.03)",
-              }}
-            >
-              recognition
-            </div>
-            <h2
-              id="achievements-heading"
-              style={{
-                fontSize: "clamp(2rem, 5vw, 3rem)",
-                fontWeight: 900,
-                fontFamily: "'Syne', sans-serif",
-                color: "#f1f5f9",
-                margin: "0 0 14px",
-                lineHeight: 1.1,
-              }}
-            >
-              Awards &{" "}
-              <span
-                style={{
-                  background: "linear-gradient(135deg, #f59e0b 0%, #ec4899 65%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                Achievements
-              </span>
-            </h2>
-            <p style={{ color: "#475569", fontSize: 14, fontFamily: "'JetBrains Mono', monospace", margin: 0 }}>
-              Competition results and recognition earned through building real solutions under pressure.
-            </p>
+          <div id="achievements-heading">
+            <SectionHeader
+              align="center"
+              label="recognition"
+              title={
+                <>
+                  Awards &{" "}
+                  <span
+                    style={{
+                      background: "linear-gradient(135deg, #f59e0b 0%, #ec4899 65%)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      backgroundClip: "text",
+                    }}
+                  >
+                    Achievements
+                  </span>
+                </>
+              }
+              subtitle="Competition results and recognition earned through building real solutions under pressure."
+              className="text-center"
+            />
           </div>
 
           {/* ── Podium ── */}

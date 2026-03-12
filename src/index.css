@@ -8,6 +8,16 @@
     --section-py: 6rem; /* 96px */
     --section-py-lg: 8rem; /* 128px */
   }
+
+  /* Mobile tuning */
+  @media (max-width: 480px) {
+    :root {
+      --page-pad: 1rem; /* 16px */
+      --page-pad-md: 1.25rem; /* 20px (used only if classes apply) */
+      --section-py: 4rem; /* 64px */
+      --section-py-lg: 5rem; /* 80px */
+    }
+  }
 }
 
 @layer utilities {

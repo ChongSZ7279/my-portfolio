@@ -591,7 +591,7 @@ export default function Journey() {
             </div>
             <span className="text-slate-500 text-sm font-mono">
               Chong Siew Zhen <span className="text-slate-700">·</span> UTM Software
-              Engineering <span className="text-slate-700">·</span> CGPA 3.96
+              Engineering <span className="text-slate-700">·</span> CGPA 3.97
             </span>
           </div>
           <p className="text-slate-700 text-xs font-mono">

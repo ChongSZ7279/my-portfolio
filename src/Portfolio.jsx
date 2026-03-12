@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Github, Linkedin, Mail, ChevronDown, Menu, X, ArrowRight, Terminal } from 'lucide-react';
 import SiewZhenImg from './data/image/SiewZhen.png';
 import { ABOUT_CARDS } from './data/about';
+import { PROJECTS } from './data/projects';
+import { ACHIEVEMENTS } from './data/achievements';
+import { TECH_STACK } from './data/techStack';
 import TechStack from './TechStack';
 import GrowthTimeline from './GrowthTimeLine';
 import AboutMe from './AboutMe';
@@ -289,6 +292,13 @@ const Portfolio = () => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [loaded, setLoaded] = useState(false);
 
+  const stats = [
+    { n: 3.97, suffix: '', label: 'CGPA' },
+    { n: ACHIEVEMENTS.length, suffix: '', label: 'Awards' },
+    { n: PROJECTS.length, suffix: '', label: 'Projects' },
+    { n: Object.values(TECH_STACK).reduce((acc, arr) => acc + (Array.isArray(arr) ? arr.length : 0), 0), suffix: '', label: 'Technologies' },
+  ];
+
   useHorizontalSwipeNavigate({
     enabled: true,
     onSwipeLeft: () => navigate('/journey'),
@@ -383,12 +393,30 @@ const Portfolio = () => {
                 <button
                   key={item}
                   onClick={() => scrollTo(item)}
-                  className={`px-4 py-2 text-sm font-mono rounded-lg transition-all duration-200 capitalize tracking-wide
+                  className={`group relative px-3.5 py-2 text-[13px] font-mono rounded-xl transition-all duration-200 capitalize tracking-wide
                     ${activeSection === item
-                      ? 'text-cyan-400 bg-cyan-500/10 border border-cyan-500/20'
-                      : 'text-slate-400 hover:text-white hover:bg-slate-800/60'}`}
+                      ? 'text-cyan-300 bg-cyan-500/10'
+                      : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
                 >
-                  {activeSection === item && <span className="text-cyan-600 mr-1">/</span>}{item}
+                  <span className="relative z-10">
+                    {activeSection === item && <span className="text-cyan-500 mr-1">/</span>}{item}
+                  </span>
+                  {activeSection === item && (
+                    <span
+                      className="absolute inset-0 rounded-xl border"
+                      style={{
+                        borderColor: "rgba(6,182,212,0.22)",
+                        boxShadow: "0 0 0 1px rgba(6,182,212,0.06), 0 10px 28px -18px rgba(6,182,212,0.55)",
+                      }}
+                      aria-hidden="true"
+                    />
+                  )}
+                  <span
+                    className={`absolute left-3.5 right-3.5 -bottom-0.5 h-[2px] rounded-full transition-all duration-300 ${
+                      activeSection === item ? "opacity-100" : "opacity-0 group-hover:opacity-60"
+                    }`}
+                    aria-hidden="true"
+                  />
                 </button>
               ))}
             </div>
@@ -398,7 +426,17 @@ const Portfolio = () => {
                 <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></span>
                 Open to work
               </a>
-              <button className="md:hidden p-2 text-slate-400 hover:text-white" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              <button
+                className="md:hidden w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 hover:text-white transition-all"
+                style={{
+                  background: isMenuOpen ? 'rgba(6,182,212,0.10)' : 'rgba(15,23,42,0.55)',
+                  border: isMenuOpen ? '1px solid rgba(6,182,212,0.35)' : '1px solid rgba(148,163,184,0.16)',
+                  boxShadow: isMenuOpen ? '0 12px 30px -18px rgba(6,182,212,0.7)' : 'none',
+                  backdropFilter: 'blur(14px)',
+                }}
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                aria-label={isMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+              >
                 {isMenuOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
             </div>
@@ -421,7 +459,7 @@ const Portfolio = () => {
       </nav>
 
       {/* ── HERO ── */}
-      <section id="home" className="relative min-h-screen flex flex-col justify-center px-6 pt-20">
+      <section id="home" className="relative min-h-screen flex flex-col justify-center px-4 sm:px-6 pt-20">
         <div className="max-w-6xl mx-auto w-full">
           <div className={`transition-all duration-1000 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <div className="flex items-center gap-3 mb-8">
@@ -435,14 +473,14 @@ const Portfolio = () => {
 
             <div className="mb-8">
               <div className="text-sm font-mono text-cyan-400 mb-3 tracking-widest">$ init —name="Chong Siew Zhen"</div>
-              <h1 className="font-display text-6xl md:text-8xl lg:text-9xl font-black leading-none mb-2">
+              <h1 className="font-display text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black leading-none mb-2">
                 <span className="text-gradient">CHONG</span>
               </h1>
-              <h1 className="font-display text-6xl md:text-8xl lg:text-9xl font-black leading-none text-white/10 mb-4">
+              <h1 className="font-display text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black leading-none text-white/10 mb-4">
                 SIEW ZHEN
               </h1>
               <p className="text-lg md:text-2xl font-mono text-slate-300">
-                Full-Stack Developer <span className="text-cyan-400">|</span> AI &amp; Blockchain Innovator
+                Full-Stack Developer <span className="text-cyan-400">|</span> UI/UX Designer
               </p>
             </div>
 
@@ -464,16 +502,15 @@ const Portfolio = () => {
               </a>
             </div>
 
-            <div className="flex flex-wrap gap-8 border-t border-slate-800 pt-8">
-              {[
-                { n: 3.96, s: '', label: 'CGPA' },
-                { n: 6, s: '+', label: 'Awards' },
-                { n: 4, s: '+', label: 'Projects' },
-                { n: 15, s: '+', label: 'Technologies' },
-              ].map(({ n, s, label }) => (
-                <div key={label}>
-                  <div className="text-2xl font-black text-white font-display"><Counter end={n} suffix={s} /></div>
-                  <div className="text-xs text-slate-500 font-mono tracking-widest uppercase mt-0.5">{label}</div>
+            <div className="grid grid-cols-4 gap-4 border-t border-slate-800 pt-8 sm:flex sm:flex-wrap sm:gap-8">
+              {stats.map(({ n, suffix, label }) => (
+                <div key={label} className="min-w-0">
+                  <div className="text-2xl font-black text-white font-display tabular-nums">
+                    <Counter end={n} suffix={suffix} />
+                  </div>
+                  <div className="text-[11px] sm:text-xs text-slate-500 font-mono tracking-widest uppercase mt-0.5">
+                    {label}
+                  </div>
                 </div>
               ))}
             </div>
@@ -514,7 +551,7 @@ const Portfolio = () => {
       <ProjectsAndAchievements />
 
       {/* ── CONTACT ── */}
-      <section id="contact" className="relative py-32 px-6">
+      <section id="contact" className="relative py-20 sm:py-32 px-4 sm:px-6">
         <div className="max-w-3xl mx-auto text-center">
           <SectionHeader
             align="center"
@@ -545,7 +582,7 @@ const Portfolio = () => {
                 </div>
                 <div>
                   <div className="text-xs font-mono text-slate-500 mb-1 uppercase tracking-widest">{label}</div>
-                  <div className="text-sm text-slate-300 group-hover:text-white transition-colors truncate">{value}</div>
+                  <div className="text-sm text-slate-300 group-hover:text-white transition-colors break-all sm:truncate">{value}</div>
                 </div>
               </a>
             ))}
@@ -569,7 +606,7 @@ const Portfolio = () => {
                 className="w-full h-full object-cover"
               />
             </div>
-            <span className="text-slate-500 text-sm font-mono">Chong Siew Zhen <span className="text-slate-700">·</span> UTM Software Engineering <span className="text-slate-700">·</span> CGPA 3.96</span>
+            <span className="text-slate-500 text-sm font-mono">Chong Siew Zhen <span className="text-slate-700">·</span> UTM Software Engineering <span className="text-slate-700">·</span> CGPA 3.97</span>
           </div>
           <p className="text-slate-700 text-xs font-mono">© 2026 · Built with React + Tailwind · Imperfectly Perfect</p>
         </div>

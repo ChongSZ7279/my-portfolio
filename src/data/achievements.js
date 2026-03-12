@@ -115,7 +115,7 @@ export const ACHIEVEMENTS = [
     organizer: "UTM Robocon",
     achievement: "Champion",
     tier: "Champion",
-    tierColor: "#10b981",
+    tierColor: "#f59e0b",
     rankScore: 1,
     project: "UTM Robocon",
     projectSummary: "Inter-university robotics friendly match based on the theme of ABU Robocon 2024.",

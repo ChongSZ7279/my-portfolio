@@ -10,7 +10,7 @@ export default function SectionHeader({
   const isCenter = align === "center";
 
   return (
-    <div className={`mb-16 md:mb-20 ${className}`}>
+    <div className={`mb-12 sm:mb-16 md:mb-20 ${className}`}>
       <div
         className={`flex items-center gap-3 mb-4 ${
           isCenter ? "justify-center" : ""
@@ -32,12 +32,12 @@ export default function SectionHeader({
       </div>
 
       <div className={isCenter ? "text-center" : ""}>
-        <h2 className="text-5xl md:text-6xl font-black text-white leading-none mb-4 font-display">
+        <h2 className="text-3xl sm:text-4xl md:text-6xl font-black text-white leading-tight sm:leading-none mb-3 sm:mb-4 font-display">
           {title}
         </h2>
         {subtitle ? (
           <p
-            className={`text-slate-400 text-lg max-w-xl leading-relaxed ${
+            className={`text-slate-400 text-base sm:text-lg max-w-xl leading-relaxed ${
               isCenter ? "mx-auto" : ""
             }`}
           >

@@ -672,7 +672,7 @@ function ProjectCard({ project, delay }) {
                 <BrowserFrame src={webShot} alt={`${project.title} web`} accent={project.accent} hovered={hovered} url={projectUrl} />
               </div>
             </div>
-            <div style={{ position: "absolute", bottom: -70, right: 14, zIndex: 20 }}>
+            <div className="proj-mobile-preview" style={{ position: "absolute", bottom: -70, right: 14, zIndex: 20 }}>
               <MobileFrame src={mobileShot} alt={`${project.title} mobile`} accent={project.accent} hovered={hovered} />
             </div>
             <div style={{ position: "absolute", bottom: 12, left: 16, zIndex: 20 }}>
@@ -921,6 +921,39 @@ export default function PortfolioCards() {
         @media(min-width:1080px){
           .project-grid > *:last-child:nth-child(3n+1){grid-column:2}
         }
+
+        /* Mobile: prevent the floating phone preview from clipping */
+        @media (max-width: 420px) {
+          .proj-mobile-preview {
+            right: 10px !important;
+            bottom: -54px !important;
+            transform: none !important;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .proj-mobile-preview { display: none !important; }
+        }
+
+        /* Mobile: keep pager indicators on one row, actions on next row */
+        @media (max-width: 520px) {
+          .proj-pager {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 12px !important;
+          }
+          .proj-indicators {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+          .proj-actions {
+            width: 100% !important;
+            justify-content: center !important;
+          }
+          .proj-actions button {
+            min-width: 0 !important;
+          }
+        }
       `}</style>
 
       <div className="portfolio-root">
@@ -944,8 +977,8 @@ export default function PortfolioCards() {
             </div>
 
             {totalRows > 1 && (
-              <div style={{ marginTop: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div className="proj-pager" style={{ marginTop: 48, display: "flex", alignItems: "center", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
+                <div className="proj-indicators" style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
                     {Array.from({ length: totalRows }).map((_, i) => (
                       <div key={i} style={{
@@ -960,37 +993,39 @@ export default function PortfolioCards() {
                     row {visibleRows}/{totalRows}
                   </span>
                 </div>
-                {hasMore && (
-                  <button onClick={() => setVisibleRows(r => r + 1)}
-                    style={{
-                      display: "inline-flex", alignItems: "center", gap: 8,
-                      padding: "10px 22px", borderRadius: 14,
-                      fontSize: 13, fontWeight: 600, cursor: "pointer",
-                      fontFamily: "'JetBrains Mono',monospace", letterSpacing: "0.03em",
-                      color: "#67e8f9", border: "1px solid rgba(6,182,212,0.38)",
-                      background: "rgba(6,182,212,0.08)",
-                      boxShadow: "0 10px 30px -18px rgba(6,182,212,0.55)",
-                      transition: "transform 0.2s",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.transform = "scale(1.04)"}
-                    onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
-                  >Show more ↓</button>
-                )}
-                {isExpanded && (
-                  <button onClick={() => setVisibleRows(1)}
-                    style={{
-                      display: "inline-flex", alignItems: "center", gap: 8,
-                      padding: "10px 22px", borderRadius: 14,
-                      fontSize: 13, fontWeight: 600, cursor: "pointer",
-                      fontFamily: "'JetBrains Mono',monospace", letterSpacing: "0.03em",
-                      color: "#94a3b8", border: "1px solid rgba(148,163,184,0.18)",
-                      background: "rgba(148,163,184,0.05)",
-                      transition: "transform 0.2s",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.transform = "scale(1.04)"}
-                    onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
-                  >Show less ↑</button>
-                )}
+                <div className="proj-actions" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
+                  {hasMore && (
+                    <button onClick={() => setVisibleRows(r => r + 1)}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 8,
+                        padding: "10px 22px", borderRadius: 14,
+                        fontSize: 13, fontWeight: 600, cursor: "pointer",
+                        fontFamily: "'JetBrains Mono',monospace", letterSpacing: "0.03em",
+                        color: "#67e8f9", border: "1px solid rgba(6,182,212,0.38)",
+                        background: "rgba(6,182,212,0.08)",
+                        boxShadow: "0 10px 30px -18px rgba(6,182,212,0.55)",
+                        transition: "transform 0.2s",
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.transform = "scale(1.04)"}
+                      onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                    >Show more ↓</button>
+                  )}
+                  {isExpanded && (
+                    <button onClick={() => setVisibleRows(1)}
+                      style={{
+                        display: "inline-flex", alignItems: "center", gap: 8,
+                        padding: "10px 22px", borderRadius: 14,
+                        fontSize: 13, fontWeight: 600, cursor: "pointer",
+                        fontFamily: "'JetBrains Mono',monospace", letterSpacing: "0.03em",
+                        color: "#94a3b8", border: "1px solid rgba(148,163,184,0.18)",
+                        background: "rgba(148,163,184,0.05)",
+                        transition: "transform 0.2s",
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.transform = "scale(1.04)"}
+                      onMouseLeave={e => e.currentTarget.style.transform = "scale(1)"}
+                    >Show less ↑</button>
+                  )}
+                </div>
               </div>
             )}
           </div>
