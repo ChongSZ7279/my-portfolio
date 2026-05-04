@@ -52,6 +52,14 @@ function useIsMobile() {
   return isMobile;
 }
 
+function getMilestoneImages(milestone) {
+  if (Array.isArray(milestone.images) && milestone.images.length > 0) {
+    return milestone.images.filter(Boolean);
+  }
+  if (milestone.image) return [milestone.image];
+  return [];
+}
+
 /* ─────────────────────────────────────────────
    PARTICLE BACKGROUND
 ───────────────────────────────────────────── */
@@ -182,9 +190,7 @@ function JourneyModal({ milestone, accent, onClose }) {
 
   if (!mounted || !milestone) return null;
 
-  const images = Array.isArray(milestone.images)
-    ? milestone.images.filter(Boolean)
-    : milestone.image ? [milestone.image] : [];
+  const images = getMilestoneImages(milestone);
 
   return createPortal(
     <>
@@ -207,7 +213,7 @@ function JourneyModal({ milestone, accent, onClose }) {
       >
         <div
           style={{
-            width: "100%", maxWidth: 720, margin: "auto", pointerEvents: "all",
+            width: "100%", maxWidth: 980, margin: "auto", pointerEvents: "all",
             opacity: visible ? 1 : 0,
             transform: visible ? "scale(1) translateY(0)" : "scale(0.93) translateY(24px)",
             transition: "opacity 0.34s cubic-bezier(0.22,1,0.36,1), transform 0.34s cubic-bezier(0.22,1,0.36,1)",
@@ -230,85 +236,90 @@ function JourneyModal({ milestone, accent, onClose }) {
               aria-label="Close"
             >✕</button>
 
-            {images.length > 0 && (
-              <div className="relative w-full h-56 md:h-64 overflow-hidden">
-                <img src={images[imgIdx]} alt={milestone.title} className="w-full h-full object-cover" />
-                <div className="absolute inset-0" style={{ background: `linear-gradient(to bottom,rgba(15,23,42,0.1),rgba(15,23,42,0.95))` }} />
-                {images.length > 1 && (
-                  <>
-                    <div className="absolute top-3 left-3 flex gap-2 z-10">
-                      {images.map((src, i) => (
-                        <button key={src + i} onClick={(e) => { e.stopPropagation(); setImgIdx(i); }}
-                          className="w-9 h-7 rounded-md overflow-hidden border bg-slate-900/60"
-                          style={{ borderColor: i === imgIdx ? accent : "rgba(148,163,184,0.35)", opacity: i === imgIdx ? 1 : 0.7 }}>
-                          <img src={src} alt="" className="w-full h-full object-cover" />
-                        </button>
-                      ))}
+            <div className="p-4 md:p-5">
+              {images.length > 0 && (
+                <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 mb-4">
+                  {images.map((src, i) => (
+                    <button
+                      key={src + i}
+                      onClick={(e) => { e.stopPropagation(); setImgIdx(i); }}
+                      className="shrink-0 rounded-xl overflow-hidden border relative"
+                      style={{
+                        width: 130,
+                        height: 86,
+                        borderColor: i === imgIdx ? accent : "rgba(148,163,184,0.35)",
+                        boxShadow: i === imgIdx ? `0 0 14px ${accent}60` : "none",
+                      }}
+                    >
+                      <img src={src} alt="" className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="grid md:grid-cols-[1.2fr_.8fr] gap-4 md:gap-5">
+                <div className="relative rounded-2xl overflow-hidden border"
+                  style={{ borderColor: `${accent}40`, minHeight: 260, background: "rgba(2,6,23,0.9)" }}>
+                  {images.length > 0 ? (
+                    <img src={images[imgIdx]} alt={milestone.title} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">
+                      No media preview
                     </div>
-                    <div className="absolute bottom-3 left-3 right-3 flex items-center gap-3 z-10">
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded border"
-                        style={{ color: accent, borderColor: `${accent}60`, background: "rgba(15,23,42,0.9)" }}>
-                        {imgIdx + 1}/{images.length}
-                      </span>
-                      <div className="flex gap-1.5">
-                        {images.map((_, i) => (
-                          <button key={i} onClick={(e) => { e.stopPropagation(); setImgIdx(i); }}
-                            aria-label={`Go to image ${i + 1}`}
-                            style={{
-                              width: i === imgIdx ? 20 : 7, height: 7, borderRadius: 9999, border: "none", padding: 0, cursor: "pointer",
-                              background: i === imgIdx ? accent : "rgba(148,163,184,0.4)",
-                              boxShadow: i === imgIdx ? `0 0 10px ${accent}80` : "none",
-                            }} />
+                  )}
+                  <div className="absolute inset-0 pointer-events-none"
+                    style={{ background: "linear-gradient(to top, rgba(2,6,23,0.8), rgba(2,6,23,0.06))" }} />
+                </div>
+
+                <div className="rounded-2xl border p-4 md:p-5 space-y-4"
+                  style={{ borderColor: `${accent}35`, background: "rgba(15,23,42,0.65)" }}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-mono uppercase tracking-widest px-2.5 py-0.5 rounded"
+                      style={{ color: accent, background: `${accent}18` }}>{milestone.category}</span>
+                    <Badge label={milestone.badge} color={milestone.badgeColor} />
+                  </div>
+
+                  <div>
+                    <h3 className="font-display text-xl md:text-2xl font-black leading-snug mb-2"
+                      style={{ color: "#f9fafb", letterSpacing: "-0.02em" }}>{milestone.title}</h3>
+                    <p className="text-slate-400 text-sm leading-relaxed">{milestone.description}</p>
+                  </div>
+
+                  {milestone.details?.length > 0 && (
+                    <div>
+                      <div className="text-xs font-mono uppercase tracking-widest mb-2" style={{ color: accent }}>▸ Highlights</div>
+                      <ul className="space-y-1.5">
+                        {milestone.details.map((d, i) => (
+                          <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
+                            <span className="mt-0.5" style={{ color: accent }}>›</span>{d}
+                          </li>
                         ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {milestone.tags?.length > 0 && (
+                    <div>
+                      <div className="text-xs font-mono uppercase tracking-widest mb-2" style={{ color: accent }}>▸ Focus Areas</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {milestone.tags.map((t) => <Tag key={t} label={t} accent={accent} />)}
                       </div>
                     </div>
-                  </>
-                )}
-              </div>
-            )}
+                  )}
 
-            <div className="p-6 md:p-7 space-y-5">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-mono uppercase tracking-widest px-2.5 py-0.5 rounded"
-                  style={{ color: accent, background: `${accent}18` }}>{milestone.category}</span>
-                <Badge label={milestone.badge} color={milestone.badgeColor} />
+                  {milestone.link && (
+                    <div className="pt-1 border-t border-white/5">
+                      <a href={milestone.link} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-mono mt-3" style={{ color: accent }}>
+                        <span>↗</span>
+                        <span className="underline underline-offset-2">
+                          {milestone.link.includes("github") ? "View on GitHub" : "Open Link"}
+                        </span>
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div>
-                <h3 className="font-display text-2xl md:text-3xl font-black leading-snug mb-2"
-                  style={{ color: "#f9fafb", letterSpacing: "-0.02em" }}>{milestone.title}</h3>
-                <p className="text-slate-400 text-sm md:text-base leading-relaxed">{milestone.description}</p>
-              </div>
-              {milestone.details?.length > 0 && (
-                <div>
-                  <div className="text-xs font-mono uppercase tracking-widest mb-2" style={{ color: accent }}>▸ Highlights</div>
-                  <ul className="space-y-1.5">
-                    {milestone.details.map((d, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                        <span className="mt-0.5" style={{ color: accent }}>›</span>{d}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {milestone.tags?.length > 0 && (
-                <div>
-                  <div className="text-xs font-mono uppercase tracking-widest mb-2" style={{ color: accent }}>▸ Focus Areas</div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {milestone.tags.map((t) => <Tag key={t} label={t} accent={accent} />)}
-                  </div>
-                </div>
-              )}
-              {milestone.link && (
-                <div className="pt-1 border-t border-white/5">
-                  <a href={milestone.link} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-mono mt-3" style={{ color: accent }}>
-                    <span>↗</span>
-                    <span className="underline underline-offset-2">
-                      {milestone.link.includes("github") ? "View on GitHub" : "Open Link"}
-                    </span>
-                  </a>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -326,6 +337,7 @@ function MilestoneCard({ milestone, accent, delay, isMobile }) {
   const visible = useIntersection(ref);
   const [hovered, setHovered] = useState(false);
   const [open, setOpen] = useState(false);
+  const images = getMilestoneImages(milestone);
 
   const cardContent = (
     <div
@@ -401,6 +413,41 @@ function MilestoneCard({ milestone, accent, delay, isMobile }) {
           {/* Tags */}
           <div className="flex flex-wrap gap-1.5">
             {milestone.tags.map((t) => <Tag key={t} label={t} accent={accent} />)}
+          </div>
+
+          {/* Media strip */}
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+            {images.length > 0 ? (
+              images.map((src, idx) => (
+                <button
+                  key={src + idx}
+                  onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+                  className="relative shrink-0 rounded-lg overflow-hidden border"
+                  style={{
+                    width: isMobile ? 120 : 132,
+                    height: isMobile ? 76 : 84,
+                    borderColor: `${accent}35`,
+                    background: "rgba(15,23,42,0.7)",
+                  }}
+                >
+                  <img src={src} alt={`${milestone.title} preview ${idx + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))
+            ) : (
+              <button
+                onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+                className="relative shrink-0 rounded-lg overflow-hidden border flex items-center justify-center text-[11px] font-mono"
+                style={{
+                  width: isMobile ? 120 : 132,
+                  height: isMobile ? 76 : 84,
+                  borderColor: `${accent}30`,
+                  background: `linear-gradient(135deg, ${accent}18, rgba(15,23,42,0.9))`,
+                  color: "#cbd5e1",
+                }}
+              >
+                Open details
+              </button>
+            )}
           </div>
 
           <div className="mt-2 text-[11px] font-mono text-slate-600">
