@@ -12,20 +12,20 @@ export default function SectionHeader({
   return (
     <div className={`mb-12 sm:mb-16 md:mb-20 ${className}`}>
       <div
-        className={`flex items-center gap-3 mb-4 ${
+        className={`section-kicker flex items-center gap-3 mb-5 ${
           isCenter ? "justify-center" : ""
         }`}
       >
         <div
-          className={`h-px ${
+          className={`section-kicker-line h-px ${
             isCenter ? "w-12 bg-gradient-to-r from-transparent to-cyan-400" : "w-8 bg-cyan-400"
           }`}
         />
-        <span className="text-cyan-400 text-xs font-mono tracking-[0.3em] uppercase">
+        <span className="section-kicker-label text-cyan-400 text-xs font-mono tracking-[0.3em] uppercase">
           {label}
         </span>
         <div
-          className={`h-px ${
+          className={`section-kicker-line h-px ${
             isCenter ? "w-12 bg-gradient-to-l from-transparent to-cyan-400" : "w-8 bg-cyan-400"
           }`}
         />
@@ -48,4 +48,3 @@ export default function SectionHeader({
     </div>
   );
 }
-

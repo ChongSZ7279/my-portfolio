@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://chongsz7279.github.io/my-portfolio/sitemap.xml

@@ -22,220 +22,194 @@ import RoboconWeb from "./image/projects/robocon/web.png";
 import RoboconMobile from "./image/projects/robocon/mobile.png";
 import RoboconAll from "./image/projects/robocon/all.png";
 
+import RTMSWeb from "./image/projects/rtms/web.png";
+import FoodfulWeb from "./image/projects/foodful/web.png";
+
 export const PROJECTS = [
   {
-    id: "ihome",
+    id: "robocon-management",
     index: "01",
+    title: "UTM Robocon Team Management System",
+    tagline:
+      "Centralized full-stack management platform digitalizing the operations of the UTM Robocon Team.",
+    accent: "#8b5cf6",
+    accentGlow: "rgba(139,92,246,0.35)",
+    category: "Web · Full-Stack · Management",
+    status: "2025 – 2026",
+    statusColor: "#8b5cf6",
+    tech: ["React.js", "Laravel", "MySQL", "Python", "Face Recognition", "OCR"],
+    github: null,
+    videoUrl: null,
+    liveUrl: "app.utmrobocon.com", // internal system — add if you get a staging/demo URL
+    images: {
+      hero: RTMSWeb,
+      supporting: [],
+      supportingLabels: ["System Overview"],
+    },
+
+    problem:
+      "UTM Robocon operations involve multiple departments, bureaus, members, documents, inventory, finances, events, and partnerships, making information difficult to manage when distributed across different platforms.",
+
+    solution:
+      "Designed and developed a centralized web-based management system covering 11 operational modules. The system integrates role-based access, attendance with face recognition, OCR-assisted claims processing, task management, inventory, purchasing, financial management, partnerships, events, documents, and maintenance.",
+
+    architecture: "React.js · Laravel · MySQL · Python AI Services",
+
+    impact: [
+      "11 integrated management modules",
+      "Supports 4 management roles, 3 department roles, and 6 bureau roles",
+      "Face recognition for attendance management",
+      "OCR-assisted receipt and claim processing",
+      "Individually handled requirements, design, development, testing, deployment, and maintenance",
+    ],
+  },
+
+  {
+    id: "ihome",
+    index: "02",
     title: "iHome",
     tagline:
       "AI-powered household management platform that organizes daily home activities through modular smart services.",
     accent: "#06b6d4",
     accentGlow: "rgba(6,182,212,0.35)",
-    category: "Mobile · Smart Home",
+    category: "Mobile · AI · Smart Home",
     status: "Jan 2026 – Feb 2026",
     statusColor: "#06b6d4",
     tech: ["Flutter", "Firebase", "Gemini API", "OCR"],
     github: "https://github.com/ChongSZ7279/ihome",
-    demo: "https://youtu.be/9S38e9rzjxM",
+    videoUrl: "https://youtu.be/9S38e9rzjxM",
+    liveUrl: null, // add TestFlight / Play Store / web build link if available
     images: {
       hero: IHomeWeb,
       supporting: [IHomeMobile, IHomeAll],
       supportingLabels: ["Mobile UI", "System Overview"],
     },
-  
+
     problem:
-      "Managing household tasks such as expenses, food inventory, and clothing organization often requires multiple apps or manual tracking, resulting in fragmented information and inefficient home management.",
-  
+      "Managing household expenses, food inventory, and clothing organization often requires multiple apps or manual tracking, resulting in fragmented information and inefficient home management.",
+
     solution:
-      "Developed iHome, a modular smart home management application that centralizes household activities into structured modules. The platform includes Financial, Food, and Clothing modules, along with a customizable module system that allows users to create their own management categories. AI and OCR technologies are integrated to automate data entry and provide intelligent assistance.",
-  
-    architecture: "Flutter · Firebase · AI Integration",
-  
+      "Developed iHome, a modular smart home management application that centralizes household activities into structured modules. The platform includes Financial, Food, and Clothing modules, along with customizable modules. AI and OCR technologies are integrated to automate data entry and provide intelligent assistance.",
+
+    architecture: "Flutter · Firebase · Gemini AI · OCR",
+
     impact: [
-      "Modular system architecture supporting Financial, Food, Clothing, and Custom modules",
-      "OCR-based data extraction to simplify manual input (e.g., bills or receipts)",
-      "AI-powered insights to assist users in organizing household information",
+      "Modular architecture supporting Financial, Food, Clothing, and Custom modules",
+      "OCR-based data extraction to reduce manual data entry",
+      "Gemini AI integration for intelligent household assistance",
+      "Firebase-based backend and data management",
     ],
   },
-  {
-    id: "kaching",
-    index: "02",
-    title: "Ka-Ching",
-    tagline:
-      "Smart expense-sharing app with real-time balances and OCR-assisted expense entry.",
-    accent: "#10b981",
-    accentGlow: "rgba(16,185,129,0.35)",
-    category: "Mobile · FinTech",
-    status: "Apr 2025 – Jun 2025",
-    statusColor: "#10b981",
-    tech: ["Flutter", "Firebase", "Currency API", "OCR"],
-    github: "https://github.com/wangyt0119/Ka-Ching-flutter-firebase-",
-    demo: "https://www.canva.com/design/DAG_rxMXTzc/gOOphTsqS5-a995v5--KXA/edit?utm_content=DAG_rxMXTzc&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton",
-    images: {
-      hero: KachingWeb,
-      supporting: [KachingMobile, KachingAll],
-      supportingLabels: ["Mobile UI", "Admin UI"],
-    },
-    problem:
-      "Group expense tracking often causes confusion and conflict due to unclear balances, cross-currency issues, and manual entry friction.",
-    solution:
-      "Built Ka-Ching to record shared expenses, auto-calculate balances, and present clear summaries with fairness and transparency for groups.",
-    architecture: null,
-    impact: [
-      "Real-time balance calculation and summaries",
-      "Cross-currency friendly workflows via Currency API",
-      "OCR-assisted expense input to reduce manual effort",
-    ],
-  },
-  {
-    id: "mindfulme",
-    index: "03",
-    title: "MindfulMe",
-    tagline:
-      "Mental health self-care app with mood tracker, diary, stress release-to-fire, AI chat, and meditation — in 3 languages.",
-    accent: "#8b5cf6",
-    accentGlow: "rgba(139,92,246,0.35)",
-    category: "AI · Mobile",
-    status: "Feb 2025 – Apr 2025",
-    statusColor: "#8b5cf6",
-    tech: ["Flutter", "Gemini AI", "Node.js", "Express.js"],
-    github: "https://github.com/ChongSZ7279/mental_help",
-    demo: "https://www.youtube.com/watch?v=R92lvP_vL5Q",
-    images: {
-      hero: MindfulMeWeb,
-      supporting: [MindfulMeMobile, MindfulMeAll],
-      supportingLabels: ["Mobile UI", "5 Keys Insight"],
-    },
-    problem:
-      "Many users struggle to find accessible, approachable self-care tools that fit their language and daily routines.",
-    solution:
-      "Developed MindfulMe with multiple self-care features and multilingual accessibility (3 languages) to broaden reach across diverse users.",
-    architecture: null,
-    impact: [
-      "Mood tracker + digital diary for daily reflection",
-      "Stress release-to-fire interaction for quick relief",
-      "Gemini AI-powered chat",
-      "3-language support for accessibility",
-    ],
-  },
+
   {
     id: "trustchain",
-    index: "04",
+    index: "03",
     title: "TrustChain",
     tagline:
-      "Blockchain-based donation platform with smart contract milestone fund disbursement (Scroll network).",
+      "Blockchain-based donation platform with smart contract milestone fund disbursement on the Scroll network.",
     accent: "#f59e0b",
     accentGlow: "rgba(245,158,11,0.35)",
-    category: "Web3 · Full-Stack",
+    category: "Web3 · Blockchain · Full-Stack",
     status: "Mar 2025 – Apr 2025",
     statusColor: "#f59e0b",
     tech: ["React.js", "Laravel", "Scroll", "Solidity", "Web3.js"],
     github: "https://github.com/ChongSZ7279/trustchain",
-    demo: "https://www.youtube.com/watch?v=KfCRkoNDBb8",
+    videoUrl: "https://www.youtube.com/watch?v=KfCRkoNDBb8",
+    liveUrl: null, // add the deployed testnet/live app URL if it's still up
     images: {
       hero: TrustChainWeb,
       supporting: [TrustChainMobile, TrustChainAll],
       supportingLabels: ["Organization Card", "Case Study"],
     },
+
     problem:
       "Donors often lack transparency and assurance on how funds are disbursed and used in charity workflows.",
+
     solution:
-      "Built a peer-to-peer donation platform with smart contract–controlled disbursements and immutable records, delivering full frontend + backend within 38 days.",
-    architecture: null,
+      "Built a peer-to-peer donation platform with smart contract-controlled disbursements and immutable records, delivering full frontend and backend development within 38 days.",
+
+    architecture: "React.js · Laravel · Solidity · Web3.js · Scroll",
+
     impact: [
-      "Top 10 Teams — Fintech & Blockchain, Varsity Hackathon 2025",
+      "Top 10 Teams — Fintech & Blockchain, VHACK 2025",
       "Smart contract milestone-based fund disbursement",
-      "Scroll network integration with Web3.js + Solidity",
+      "Scroll network integration with Web3.js and Solidity",
+      "Full-stack frontend and backend development within 38 days",
     ],
   },
+
   {
-    id: "sagile",
-    index: "05",
-    title: "SAgile Development Tools",
+    id: "foodful",
+    index: "04",
+    title: "Foodful",
     tagline:
-      "Web-based project management platform for UTM students to manage agile projects (stories, tasks, NFRs).",
-    accent: "#6366f1",
-    accentGlow: "rgba(99,102,241,0.35)",
-    category: "Web · Project Management",
-    status: "Oct 2024 – Jan 2025",
-    statusColor: "#6366f1",
-    tech: ["Laravel", "Bootstrap", "MySQL"],
+      "Food surplus management platform connecting restaurants with consumers to reduce food waste.",
+    accent: "#22c55e",
+    accentGlow: "rgba(34,197,94,0.35)",
+    category: "Web · HCI · Sustainability",
+    status: "2024",
+    statusColor: "#22c55e",
+    tech: ["React.js", "Node.js", "MySQL", "HCI"],
     github: null,
-    demo: null,
+    videoUrl: "https://www.youtube.com/watch?v=CPulWMOw8ZA",
+    liveUrl: null,
     images: {
-      hero: null,
-      supporting: [null],
-      supportingLabels: ["Agile Boards", "Collaboration"],
+      hero: FoodfulWeb,
+      supporting: [],
+      supportingLabels: ["System Overview"],
     },
+
     problem:
-      "Student teams need a practical, structured tool to manage agile deliverables with collaboration and non-functional requirements(NFR) tracking.",
+      "Restaurants may have surplus food that remains unsold, while consumers lack an efficient platform to discover and purchase available surplus food.",
+
     solution:
-      "Contributed to a Laravel-based platform supporting user stories, tasks, NFR tracking, comments, and email notifications for smoother teamwork.",
-    architecture: null,
+      "Developed Foodful, a two-interface platform connecting restaurant owners and consumers. The system supports surplus food inventory management, filtering, searching, purchasing, and real-time tracking of inventory and purchase status.",
+
+    architecture: "React.js · Node.js · MySQL",
+
     impact: [
-      "Supports agile workflow: stories, tasks, and NFR tracking",
-      "Collaboration: commenting + email notifications",
-      "Built for real UTM student team usage",
+      "HCI Day Champion",
+      "Fusion 2024 Bronze Award",
+      "Two-interface platform connecting restaurants and consumers",
+      "Inventory management, filtering, search, and purchasing",
+      "Real-time tracking of inventory and purchase status",
     ],
   },
+
   {
     id: "tvpss",
-    index: "06",
+    index: "05",
     title: "TVPSS Management System",
     tagline:
-      "Web platform to streamline TVPSS program administration across schools (user + activity management, feedback system).",
+      "Web platform to streamline TVPSS program administration across schools through user, activity, and feedback management.",
     accent: "#0ea5e9",
     accentGlow: "rgba(14,165,233,0.35)",
-    category: "Web · Education Admin",
+    category: "Web · Education Administration",
     status: "Oct 2024 – Jan 2025",
     statusColor: "#0ea5e9",
     tech: ["Spring MVC", "MySQL"],
-    github: "https://github.com/JingZheee/TVPSSHub",
-    demo: null,
+    github: "https://github.com/ChongSZ7279/TVPSSHub",
+    videoUrl: null,
+    liveUrl: null,
     images: {
       hero: TVPSSWeb,
       supporting: [TVPSSAll],
       supportingLabels: ["Activity Tracking"],
     },
+
     problem:
-      "Managing users, activities, and feedback across multiple schools is difficult without a scalable admin platform.",
+      "Managing users, activities, and feedback across multiple schools is difficult without a centralized and scalable administration platform.",
+
     solution:
-      "Developed User Management and Activity Management features plus a feedback system using Spring MVC + MySQL for scalable operations.",
-    architecture: null,
+      "Developed User Management and Activity Management features together with a feedback system using Spring MVC and MySQL to support scalable TVPSS program operations.",
+
+    architecture: "Spring MVC · MySQL",
+
     impact: [
-      "User management + activity management modules",
+      "User Management and Activity Management modules",
       "Feedback system for program improvement",
       "Scalable Spring MVC backend with MySQL storage",
-    ],
-  },
-  {
-    id: "robocon-website",
-    index: "07",
-    title: "UTM Robocon Team External Website",
-    tagline:
-      "Official team website built from scratch to share updates and engage students, sponsors, and robotics enthusiasts.",
-    accent: "#ec4899",
-    accentGlow: "rgba(236,72,153,0.35)",
-    category: "Web · Full-Stack",
-    status: "Aug 2023 – Aug 2024",
-    statusColor: "#ec4899",
-    tech: ["React.js", "Node.js", "Web Development"],
-    github: null,
-    demo: null,
-    images: {
-      hero: RoboconWeb,
-      supporting: [RoboconMobile, RoboconAll],
-      supportingLabels: ["Website UI", "Updates & Engagement"],
-    },
-    problem:
-      "The team needed an official digital presence to centralize information, updates, and outreach to the community.",
-    solution:
-      "Built a full-stack website (React.js frontend + Node.js backend) serving as the official platform for UTM Robocon Team updates and engagement.",
-    architecture: null,
-    impact: [
-      "Official digital presence for students, sponsors, and enthusiasts",
-      "From-scratch full-stack build (React + Node)",
-      "Designed for updates and engagement opportunities",
+      "Designed to support TVPSS program administration across schools",
     ],
   },
 ];

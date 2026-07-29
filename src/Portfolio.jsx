@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Github, Linkedin, Mail, ChevronDown, Menu, X, ArrowRight, Terminal } from 'lucide-react';
 import SiewZhenImg from './data/image/SiewZhen.png';
@@ -17,6 +17,7 @@ import useHorizontalSwipeNavigate from './hooks/useHorizontalSwipeNavigate';
 const ParticleField = () => {
   const canvasRef = useRef(null);
   useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -75,7 +76,7 @@ const ParticleField = () => {
     loop();
     return () => { cancelAnimationFrame(animationId); window.removeEventListener('resize', resize); };
   }, []);
-  return <canvas ref={canvasRef} className="fixed inset-0 pointer-events-none z-0" />;
+  return <canvas ref={canvasRef} aria-hidden="true" className="fixed inset-0 pointer-events-none z-0" />;
 };
 
 // ─── GLITCH TEXT ───────────────────────────────────────────────────────────────
@@ -331,9 +332,10 @@ const Portfolio = () => {
   const navItems = ['home', 'about', 'stack', 'projects', 'achievements', 'contact'];
 
   return (
-    <div className="min-h-screen bg-[#050B17] text-white font-sans overflow-x-hidden">
+    <div className="natural-tech-page portfolio-page min-h-screen bg-[#050B17] text-white font-sans overflow-x-hidden">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,600&family=Space+Grotesk:wght@500;700&display=swap');
         :root { font-family: 'Outfit', sans-serif; }
         .font-display { font-family: 'Syne', sans-serif; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
@@ -358,8 +360,123 @@ const Portfolio = () => {
         .text-gradient-cyan { background: linear-gradient(135deg, #06b6d4 0%, #818cf8 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .border-glow { box-shadow: 0 0 20px rgba(6,182,212,0.1), inset 0 0 20px rgba(6,182,212,0.02); }
         .line-glow { box-shadow: 0 0 8px rgba(6,182,212,0.6); }
+
+        /* ── Contact — natural/tech theme (moss · teal · amber) ── */
+        .ct-shell {
+          position: relative;
+          isolation: isolate;
+          overflow: hidden;
+        }
+
+        .ct-shell::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          background:
+            radial-gradient(44rem 26rem at 50% -6%, rgba(52,211,153,0.09), transparent 70%),
+            radial-gradient(rgba(255,255,255,0.028) 1px, transparent 1px);
+          background-size: auto, 28px 28px;
+        }
+
+        .ct-grid {
+          margin: 2.75rem 0 2rem;
+          display: grid;
+          gap: .85rem;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        @media (max-width: 640px) {
+          .ct-grid { grid-template-columns: 1fr; }
+        }
+
+        .ct-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: .6rem;
+          padding: 1.4rem 1rem;
+          text-decoration: none;
+          border-radius: 18px;
+          border: 1px solid rgba(255,255,255,0.08);
+          background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.016));
+          backdrop-filter: blur(24px);
+          -webkit-backdrop-filter: blur(24px);
+          box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 16px 40px -18px rgba(0,0,0,0.6);
+          transition: transform .28s cubic-bezier(.22,1,.36,1), border-color .28s ease, box-shadow .28s ease;
+        }
+
+        .ct-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(52,211,153,0.4);
+          box-shadow: 0 1px 0 rgba(255,255,255,0.07) inset, 0 20px 48px -16px rgba(0,0,0,0.65), 0 0 24px rgba(52,211,153,0.14);
+        }
+
+        .ct-icon-wrap {
+          width: 2.6rem;
+          height: 2.6rem;
+          border-radius: 12px;
+          display: grid;
+          place-items: center;
+          color: #6ee7b7;
+          background: rgba(52,211,153,0.1);
+          border: 1px solid rgba(52,211,153,0.25);
+          transition: transform .25s ease, color .25s ease;
+        }
+
+        .ct-card:hover .ct-icon-wrap {
+          transform: scale(1.08);
+          color: #22d3ee;
+        }
+
+        .ct-card-label {
+          font: 600 10px 'Space Grotesk', monospace;
+          text-transform: uppercase;
+          letter-spacing: .14em;
+          color: #6b8277;
+          margin-bottom: .2rem;
+        }
+
+        .ct-card-value {
+          font-family: 'Outfit', sans-serif;
+          font-size: .85rem;
+          color: #cdd9d2;
+          word-break: break-all;
+          transition: color .25s ease;
+        }
+
+        .ct-card:hover .ct-card-value {
+          color: #eef5f0;
+        }
+
+        .ct-status-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: .5rem;
+          padding: .5rem 1rem;
+          border-radius: 999px;
+          border: 1px solid rgba(251,191,36,0.3);
+          background: rgba(251,191,36,0.08);
+          color: #fcd34d;
+          font: 500 12px 'Space Grotesk', monospace;
+        }
+
+        .ct-status-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: #fbbf24;
+          box-shadow: 0 0 8px #fbbf24;
+          animation: ct-blink 2s ease infinite;
+        }
+
+        @keyframes ct-blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: .35; }
+        }
       `}</style>
 
+      <a className="skip-link" href="#main-content">Skip to main content</a>
       <ParticleField />
       <div className="fixed inset-0 grid-bg pointer-events-none z-0 opacity-60"></div>
       <div className="fixed inset-0 noise pointer-events-none z-0"></div>
@@ -372,14 +489,14 @@ const Portfolio = () => {
       ></div>
 
       {/* ── NAVIGATION ── */}
-      <nav className={`fixed w-full z-50 transition-all duration-500 ${isScrolled ? 'bg-[#050B17]/90 backdrop-blur-xl border-b border-slate-800/80' : ''}`}>
+      <nav className={`site-nav fixed w-full z-50 transition-all duration-500 ${isScrolled ? 'is-scrolled bg-[#050B17]/90 backdrop-blur-xl border-b border-slate-800/80' : ''}`}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex items-center justify-between h-16">
-            <button onClick={() => scrollTo('home')} className="group flex items-center gap-3">
+            <button onClick={() => scrollTo('home')} aria-label="Back to the top of Chong Siew Zhen's portfolio" className="group flex items-center gap-3">
               <div className="w-9 h-9 rounded-full overflow-hidden border border-cyan-400/40 flex items-center justify-center bg-slate-900/60">
                 <img
                   src={SiewZhenImg}
-                  alt="Chong Siew Zhen"
+                  alt=""
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -459,7 +576,8 @@ const Portfolio = () => {
       </nav>
 
       {/* ── HERO ── */}
-      <section id="home" className="relative min-h-screen flex flex-col justify-center px-4 sm:px-6 pt-20">
+      <main id="main-content">
+      <section id="home" aria-labelledby="portfolio-title" className="hero-section relative min-h-screen flex flex-col justify-center px-4 sm:px-6 pt-20">
         <div className="max-w-6xl mx-auto w-full">
           <div className={`transition-all duration-1000 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <div className="flex items-center gap-3 mb-8">
@@ -473,20 +591,19 @@ const Portfolio = () => {
 
             <div className="mb-8">
               <div className="text-sm font-mono text-cyan-400 mb-3 tracking-widest">$ init —name="Chong Siew Zhen"</div>
-              <h1 className="font-display text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black leading-none mb-2">
-                <span className="text-gradient">CHONG</span>
-              </h1>
-              <h1 className="font-display text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black leading-none text-white/10 mb-4">
-                SIEW ZHEN
+              <h1 id="portfolio-title" className="font-display text-4xl sm:text-6xl md:text-8xl lg:text-9xl font-black leading-none mb-4">
+                <span className="text-gradient block">CHONG</span>
+                <span className="block text-white/25">SIEW ZHEN</span>
               </h1>
               <p className="text-lg md:text-2xl font-mono text-slate-300">
                 Full-Stack Developer <span className="text-cyan-400">|</span> UI/UX Designer
               </p>
             </div>
 
-            <div className="text-sm md:text-base text-slate-400 font-mono mb-6 h-5">
+            <div className="text-sm md:text-base text-slate-400 font-mono mb-6 h-5" aria-hidden="true">
               <TypeWriter strings={['Hackathon Competitor', 'Robotics Champion', 'System-Focused Engineer', 'Builder of Scalable Real-World Apps']} />
             </div>
+            <p className="sr-only">Hackathon competitor, robotics champion, system-focused engineer, and builder of scalable real-world apps.</p>
 
             <div className="flex flex-wrap gap-4 mb-16">
               <button onClick={() => scrollTo('projects')} className="group flex items-center gap-2 px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-900 font-bold rounded-xl transition-all duration-200 hover:shadow-lg hover:shadow-cyan-500/30 text-sm">
@@ -548,11 +665,13 @@ const Portfolio = () => {
       <TechStack />
 
       {/* ── PROJECTS & ACHIEVEMENTS ── */}
-      <ProjectsAndAchievements />
+      <div id="projects">
+        <ProjectsAndAchievements />
+      </div>
 
       {/* ── CONTACT ── */}
-      <section id="contact" className="relative py-20 sm:py-32 px-4 sm:px-6">
-        <div className="max-w-3xl mx-auto text-center">
+      <section id="contact" className="ct-shell relative py-20 sm:py-32 px-4 sm:px-6">
+        <div className="max-w-3xl mx-auto text-center relative z-10">
           <SectionHeader
             align="center"
             label="get in touch"
@@ -560,40 +679,50 @@ const Portfolio = () => {
               <>
                 Let's Build
                 <br />
-                <span className="text-gradient-cyan">Something Real</span>
+                <span
+                  style={{
+                    fontStyle: "italic",
+                    background: "linear-gradient(135deg, #34d399 0%, #22d3ee 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  Something Real
+                </span>
               </>
             }
             subtitle={
-              "I'm open to internships, hackathon collaborations, research opportunities, or just interesting conversations about AI, Web3, and systems design."
+              "I'm open to job, hackathon collaborations, research opportunities, or just interesting conversations about AI, Web3, and systems design."
             }
             className="mb-12"
           />
 
-          <div className="grid sm:grid-cols-3 gap-4 mb-12">
+          <div className="ct-grid">
             {[
-              { icon: Mail, label: 'Email', value: 'chong.zhen@graduate.utm.my', href: 'mailto:chong.zhen@graduate.utm.my', color: 'violet' },
-              { icon: Linkedin, label: 'LinkedIn', value: 'chongsiewzhen', href: 'https://www.linkedin.com/in/chong-siew-zhen-29b236257/', color: 'cyan' },
-              { icon: Github, label: 'GitHub', value: 'ChongSZ7279', href: 'https://github.com/ChongSZ7279', color: 'slate' },
+              { icon: Mail, label: 'Email', value: 'chongsiewzhen860@gmail.com', href: 'mailto:chong.zhen@graduate.utm.my' },
+              { icon: Linkedin, label: 'LinkedIn', value: 'chongsiewzhen', href: 'https://www.linkedin.com/in/chong-siew-zhen-29b236257/' },
+              { icon: Github, label: 'GitHub', value: 'ChongSZ7279', href: 'https://github.com/ChongSZ7279' },
             ].map(({ icon: Icon, label, value, href }) => (
-              <a key={label} href={href} target="_blank" rel="noopener noreferrer"
-                className="group flex flex-col items-center gap-3 p-6 bg-slate-900/50 border border-slate-800 hover:border-slate-600 rounded-2xl transition-all duration-300 hover:bg-slate-900">
-                <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center group-hover:scale-110 transition-transform">
-                  <Icon size={18} className="text-slate-300 group-hover:text-cyan-400 transition-colors" />
+              <a key={label} href={href} target="_blank" rel="noopener noreferrer" className="ct-card">
+                <div className="ct-icon-wrap">
+                  <Icon size={18} />
                 </div>
                 <div>
-                  <div className="text-xs font-mono text-slate-500 mb-1 uppercase tracking-widest">{label}</div>
-                  <div className="text-sm text-slate-300 group-hover:text-white transition-colors break-all sm:truncate">{value}</div>
+                  <div className="ct-card-label">{label}</div>
+                  <div className="ct-card-value">{value}</div>
                 </div>
               </a>
             ))}
           </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-emerald-400 text-sm font-mono">
-            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+          <div className="ct-status-pill">
+            <span className="ct-status-dot" />
             Available for collaborations · 2026
           </div>
         </div>
       </section>
+      </main>
 
       {/* ── FOOTER ── */}
       <footer className="border-t border-slate-800 py-8 px-6">
@@ -602,7 +731,7 @@ const Portfolio = () => {
             <div className="w-7 h-7 rounded-full overflow-hidden border border-cyan-400/40 flex items-center justify-center bg-slate-900/60">
               <img
                 src={SiewZhenImg}
-                alt="Chong Siew Zhen"
+                alt=""
                 className="w-full h-full object-cover"
               />
             </div>

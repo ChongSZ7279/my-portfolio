@@ -29,6 +29,7 @@ import YoungMakerChallenge from "./image/achievements/YoungMakerChallenge.png";
 import RoboconMalaysia   from "./image/achievements/RoboconMalaysia.png";
 import ABURobocon        from "./image/achievements/ABURobocon.png";
 import FriendlyMatch     from "./image/achievements/FriendlyMatch.png";
+import Digitex        from "./image/achievements/Digitex.png";
 
 export const ACHIEVEMENTS = [
   // ── rankScore 1 → Champion ──────────────────────────────────────────────────
@@ -40,7 +41,7 @@ export const ACHIEVEMENTS = [
     year: "2024",
     organizer: "Universiti Teknologi Malaysia",
     achievement: "Champion",
-    tier: "Champion",
+    tier: "University",
     tierColor: "#f59e0b",
     rankScore: 1,
     project: "FoodFul",
@@ -64,7 +65,7 @@ export const ACHIEVEMENTS = [
     year: "2023",
     organizer: "Robocon Malaysia",
     achievement: "Champion + Best Technology + Best Team",
-    tier: "Champion",
+    tier: "National",
     tierColor: "#f59e0b",
     rankScore: 1,
     project: "UTM Robocon Team",
@@ -90,7 +91,7 @@ export const ACHIEVEMENTS = [
     year: "2019",
     organizer: "Unimas",
     achievement: "Champion (Sarawak State Level)",
-    tier: "Champion",
+    tier: "State",
     tierColor: "#f59e0b",
     rankScore: 1,
     project: "Ecojaya",
@@ -114,7 +115,7 @@ export const ACHIEVEMENTS = [
     year: "2024",
     organizer: "UTM Robocon",
     achievement: "Champion",
-    tier: "Champion",
+    tier: "National",
     tierColor: "#f59e0b",
     rankScore: 1,
     project: "UTM Robocon",
@@ -137,7 +138,7 @@ export const ACHIEVEMENTS = [
     year: "2024",
     organizer: "myHCI-UX",
     achievement: "Bronze Award",
-    tier: "Bronze",
+    tier: "National",
     tierColor: "#cd7c2f",
     rankScore: 3,
     project: "FoodFul",
@@ -152,6 +153,28 @@ export const ACHIEVEMENTS = [
     demo: null,
     images: [Fusion],
   },
+  {
+    id: "digitex-robocon-2026",
+    icon: "🥉",
+    competition: "DIGITEx 2026",
+    year: "2026",
+    organizer: "Universiti Teknologi Malaysia",
+    achievement: "Bronze Award",
+    tier: "National",
+    tierColor: "#cd7c2f",
+    rankScore: 3,
+    project: "UTM Robocon Team Web Application with Face Recognition System",
+    projectSummary:
+      "A web application that supports UTM Robocon Team operations with an integrated face recognition system.",
+    role:
+      "Developed the web application and contributed to the face recognition system integration.",
+    tech: ["React", "Node.js", "Face Recognition"],
+    impact: ["Bronze Award", "DIGITEx 2026"],
+    video: null,
+    github: null,
+    demo: null,
+    images: [Digitex],
+  },
 
   // ── rankScore 4 → International award ──────────────────────────────────────
 
@@ -162,7 +185,7 @@ export const ACHIEVEMENTS = [
     year: "2024",
     organizer: "Asia-Pacific Broadcasting Union",
     achievement: "Panasonic Award",
-    tier: "International Award",
+    tier: "International",
     tierColor: "#0ea5e9",
     rankScore: 4,
     project: "UTM Robocon",
@@ -182,7 +205,7 @@ export const ACHIEVEMENTS = [
     year: "2023",
     organizer: "Asia-Pacific Broadcasting Union",
     achievement: "Rohm Award",
-    tier: "International Award",
+    tier: "International",
     tierColor: "#6366f1",
     rankScore: 4,
     project: "UTM Robocon",
@@ -205,7 +228,7 @@ export const ACHIEVEMENTS = [
     year: "2025",
     organizer: "Universiti Sains Malaysia",
     achievement: "Top 10 – Fintech & Blockchain Track",
-    tier: "Top 10",
+    tier: "International",
     tierColor: "#f59e0b",
     rankScore: 5,
     project: "TrustChain",
@@ -232,7 +255,7 @@ export const ACHIEVEMENTS = [
     year: "2023",
     organizer: "UNITEN",
     achievement: "Top 15 Teams",
-    tier: "Top 15",
+    tier: "International",
     tierColor: "#8b5cf6",
     rankScore: 6,
     project: "Durian",
@@ -257,8 +280,7 @@ export const ACHIEVEMENTS = [
     year: "2025",
     organizer: "Universiti Teknologi Malaysia",
     achievement: "Consolation Award",
-    tier: "Consolation",
-    tierColor: "#10b981",
+    tier: "University",
     rankScore: 7,
     project: "Ka-Ching",
     projectSummary:

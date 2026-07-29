@@ -3,6 +3,24 @@ import SectionHeader from "./components/SectionHeader";
 import { ACHIEVEMENTS as ACHIEVEMENTS_DATA } from "./data/achievements";
 import { PROJECTS } from "./data/projects";
 
+// Tier color is derived from the competition level itself, not stored
+// per-award — so "International" (or any tier) always reads the same
+// color no matter which entry it's on. Scale runs cool → warm as the
+// stage gets bigger: University and State stay in the site's existing
+// cyan/emerald accents; National steps up to violet; International,
+// the highest stage, takes the gold reserved for it elsewhere on the
+// page (medal emoji, highlight box).
+const TIER_COLORS = {
+  University: "#22d3ee",
+  State: "#34d399",
+  National: "#a78bfa",
+  International: "#f59e0b",
+};
+
+function getTierColor(tier) {
+  return TIER_COLORS[tier] || "#34d399";
+}
+
 function Img({ src, alt, style }) {
   if (!src) {
     return (
@@ -11,10 +29,10 @@ function Img({ src, alt, style }) {
           ...style,
           display: "grid",
           placeItems: "center",
-          background: "linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,41,59,0.9))",
-          color: "#64748b",
+          background: "linear-gradient(135deg, rgba(9,20,15,0.95), rgba(15,30,22,0.9))",
+          color: "#7d9488",
           fontSize: 12,
-          border: "1px solid rgba(148,163,184,0.12)",
+          border: "1px solid rgba(255,255,255,0.08)",
           borderRadius: 12,
         }}
       >
@@ -25,9 +43,21 @@ function Img({ src, alt, style }) {
   return <img src={src} alt={alt} style={style} loading="lazy" />;
 }
 
+function ProjectPlaceholder({ category, status }) {
+  return (
+    <div className="pa-placeholder">
+      <div className="pa-placeholder-ring" />
+      <div className="pa-placeholder-core">
+        <span className="pa-placeholder-eyebrow">{category}</span>
+        <span className="pa-placeholder-status">{status}</span>
+      </div>
+    </div>
+  );
+}
+
 function AchievementCard({ item, onClick }) {
   return (
-    <article className="pa-achievement-col" style={{ "--tier-color": item.tierColor || "#06b6d4" }}>
+    <article className="pa-achievement-col" style={{ "--tier-color": getTierColor(item.tier) }}>
       <div className="pa-timeline-year">{item.year}</div>
       <div className="pa-timeline-node" />
       <div className="pa-timeline-stem" />
@@ -44,8 +74,8 @@ function AchievementCard({ item, onClick }) {
         }}
       >
         <div className="pa-achievement-icon">{item.icon}</div>
+        <span className="pa-tier-badge">{item.tier}</span>
         <h4>{item.competition}</h4>
-        <p className="pa-achievement-tier">{item.achievement}</p>
         <p>{item.project}</p>
       </div>
     </article>
@@ -91,7 +121,7 @@ export default function ProjectAndAchievement() {
     return [...(ACHIEVEMENTS_DATA || [])]
       .filter((a) => {
         const year = Number(a.year);
-        return year >= 2019 && year <= 2025;
+        return year >= 2019 && year <= 2026;
       })
       .sort((a, b) => Number(a.year) - Number(b.year) || a.rankScore - b.rankScore);
   }, []);
@@ -105,7 +135,7 @@ export default function ProjectAndAchievement() {
     }, 200);
   }, [activeIndex]);
 
-  const demoEmbedUrl = getYouTubeEmbedUrl(activeProject?.demo);
+  const videoEmbedUrl = getYouTubeEmbedUrl(activeProject?.videoUrl);
   const showMobileFrame =
     Boolean(activeProject?.category?.toLowerCase().includes("mobile")) ||
     Boolean(activeProject?.tech?.some((t) => t.toLowerCase().includes("flutter")));
@@ -136,7 +166,7 @@ export default function ProjectAndAchievement() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600;1,9..144,700&family=Space+Grotesk:wght@400;500;700&family=Outfit:wght@400;500;600;700&display=swap');
 
         /* ── Shell & background ──────────────────────────────── */
         .pa-shell {
@@ -152,31 +182,47 @@ export default function ProjectAndAchievement() {
           inset: 0;
           z-index: -2;
           background:
-            radial-gradient(50rem 30rem at 10% 12%, rgba(96,165,250,0.08), transparent 68%),
-            radial-gradient(46rem 28rem at 90% 18%, rgba(56,189,248,0.07), transparent 70%);
+            radial-gradient(50rem 30rem at 10% 12%, rgba(52,211,153,0.08), transparent 68%),
+            radial-gradient(46rem 28rem at 90% 18%, rgba(34,211,238,0.07), transparent 70%);
+        }
+
+        .pa-shell::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: -1;
+          pointer-events: none;
+          background-image: radial-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+          background-size: 28px 28px;
         }
 
         /* ── Glass card ──────────────────────────────────────── */
         .pa-glass {
-          border: 1px solid rgba(255,255,255,0.09);
+          border: 1px solid rgba(255,255,255,0.08);
           background: linear-gradient(
             145deg,
-            rgba(255,255,255,0.065),
-            rgba(255,255,255,0.018)
+            rgba(255,255,255,0.055),
+            rgba(255,255,255,0.016)
           );
           backdrop-filter: blur(36px);
           -webkit-backdrop-filter: blur(36px);
           border-radius: 28px;
           box-shadow:
-            0 2px 0 rgba(255,255,255,0.06) inset,
+            0 2px 0 rgba(255,255,255,0.05) inset,
             0 24px 64px rgba(0,0,0,0.55),
-            0 0 0 0.5px rgba(255,255,255,0.04) inset;
+            0 0 0 0.5px rgba(255,255,255,0.03) inset;
+        }
+
+        /* ── Project frame — carries per-project accent color down to
+               both the feature card and the switcher dots below it ── */
+        .pa-project-frame {
+          transition: color .4s ease;
         }
 
         /* ── Feature wrap ────────────────────────────────────── */
         .pa-feature-wrap {
           padding: 1.5rem;
-          transition: transform .5s cubic-bezier(.22,1,.36,1);
+          transition: transform .5s cubic-bezier(.22,1,.36,1), box-shadow .5s ease;
           animation: pa-fade-up .6s cubic-bezier(.22,1,.36,1) both;
           position: relative;
           overflow: hidden;
@@ -188,8 +234,9 @@ export default function ProjectAndAchievement() {
           position: absolute;
           top: 0; left: 0; right: 0;
           height: 1px;
-          background: linear-gradient(90deg, transparent, rgba(99,102,241,0.6), rgba(6,182,212,0.5), transparent);
+          background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--proj-accent, #34d399) 65%, transparent), rgba(34,211,238,0.5), transparent);
           opacity: .7;
+          transition: background .4s ease;
         }
 
         @keyframes pa-fade-up {
@@ -228,21 +275,31 @@ export default function ProjectAndAchievement() {
           margin: .6rem 0 0;
           font-size: clamp(2rem, 2.6vw, 2.75rem);
           line-height: 1.1;
-          font-weight: 900;
-          background: linear-gradient(100deg, #f8fafc 20%, #a5b4fc 60%, #22d3ee 100%);
+          font-weight: 600;
+          font-style: italic;
+          background: linear-gradient(100deg, #eef5f0 12%, var(--proj-accent, #34d399) 52%, #22d3ee 100%);
           -webkit-background-clip: text;
           color: transparent;
           background-clip: text;
-          letter-spacing: -0.035em;
-          font-family: 'Syne', sans-serif;
+          letter-spacing: -0.01em;
+          font-family: 'Fraunces', serif;
+          transition: background .4s ease;
         }
 
         .pa-feature-left > p {
           margin: .6rem 0 0;
-          color: #94a3b8;
+          color: #8fa79b;
           line-height: 1.65;
           font-size: .9rem;
           font-family: 'Outfit', sans-serif;
+        }
+
+        /* ── Eyebrow row: category badge + timeframe pill ───── */
+        .pa-eyebrow-row {
+          display: flex;
+          align-items: center;
+          gap: .5rem;
+          flex-wrap: wrap;
         }
 
         /* ── Badge ───────────────────────────────────────────── */
@@ -252,13 +309,14 @@ export default function ProjectAndAchievement() {
           gap: .3rem;
           padding: .28rem .55rem;
           border-radius: 999px;
-          font: 600 9px 'JetBrains Mono', monospace;
+          font: 600 9px 'Space Grotesk', monospace;
           text-transform: uppercase;
           letter-spacing: .12em;
-          color: #67e8f9;
-          border: 1px solid rgba(6,182,212,0.35);
-          background: rgba(6,182,212,0.1);
+          color: color-mix(in srgb, var(--proj-accent, #34d399) 85%, #fff 15%);
+          border: 1px solid color-mix(in srgb, var(--proj-accent, #34d399) 40%, transparent);
+          background: color-mix(in srgb, var(--proj-accent, #34d399) 12%, transparent);
           width: fit-content;
+          transition: all .4s ease;
         }
 
         .pa-badge::before {
@@ -267,14 +325,26 @@ export default function ProjectAndAchievement() {
           width: 5px;
           height: 5px;
           border-radius: 50%;
-          background: #06b6d4;
-          box-shadow: 0 0 6px #06b6d4;
+          background: var(--proj-accent, #34d399);
+          box-shadow: 0 0 6px var(--proj-accent, #34d399);
           animation: pa-blink 2s ease infinite;
+          transition: background .4s ease;
         }
 
         @keyframes pa-blink {
           0%, 100% { opacity: 1; }
           50% { opacity: .3; }
+        }
+
+        .pa-status-pill {
+          font: 600 9px 'Space Grotesk', monospace;
+          letter-spacing: .1em;
+          text-transform: uppercase;
+          color: #8fa79b;
+          border: 1px solid rgba(255,255,255,0.09);
+          background: rgba(255,255,255,0.02);
+          padding: .28rem .55rem;
+          border-radius: 999px;
         }
 
         /* ── Tech pills ──────────────────────────────────────── */
@@ -287,19 +357,19 @@ export default function ProjectAndAchievement() {
 
         .pa-tech-pill {
           border-radius: 999px;
-          border: 1px solid rgba(148,163,184,0.18);
-          background: rgba(15,23,42,0.55);
-          color: #94a3b8;
+          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(9,20,15,0.55);
+          color: #8fa79b;
           padding: .22rem .55rem;
-          font: 500 10px 'JetBrains Mono', monospace;
+          font: 500 10px 'Space Grotesk', monospace;
           transition: all .25s ease;
           cursor: default;
         }
 
         .pa-tech-pill:hover {
-          background: rgba(99,102,241,0.18);
-          border-color: rgba(99,102,241,0.5);
-          color: #c7d2fe;
+          background: color-mix(in srgb, var(--proj-accent, #a78bfa) 16%, transparent);
+          border-color: color-mix(in srgb, var(--proj-accent, #a78bfa) 45%, transparent);
+          color: color-mix(in srgb, var(--proj-accent, #a78bfa) 80%, #fff 20%);
           transform: translateY(-2px);
         }
 
@@ -307,8 +377,8 @@ export default function ProjectAndAchievement() {
         .pa-highlight-box {
           margin-top: .95rem;
           border-radius: 14px;
-          border: 1px solid rgba(245,158,11,0.28);
-          background: linear-gradient(135deg, rgba(245,158,11,0.07), rgba(251,191,36,0.04));
+          border: 1px solid rgba(251,191,36,0.28);
+          background: linear-gradient(135deg, rgba(251,191,36,0.07), rgba(253,224,71,0.04));
           padding: .8rem .9rem;
           position: relative;
           overflow: hidden;
@@ -319,14 +389,14 @@ export default function ProjectAndAchievement() {
           position: absolute;
           left: 0; top: 0; bottom: 0;
           width: 2px;
-          background: linear-gradient(to bottom, #fbbf24, rgba(245,158,11,0.2));
+          background: linear-gradient(to bottom, #fbbf24, rgba(251,191,36,0.2));
           border-radius: 0 2px 2px 0;
         }
 
         .pa-highlight-box h4 {
           margin: 0 0 .5rem;
           color: #fcd34d;
-          font: 700 10px 'JetBrains Mono', monospace;
+          font: 700 10px 'Space Grotesk', monospace;
           text-transform: uppercase;
           letter-spacing: .1em;
         }
@@ -342,7 +412,7 @@ export default function ProjectAndAchievement() {
         }
 
         .pa-point-list li {
-          color: #cbd5e1;
+          color: #cdd9d2;
           font-size: .8rem;
           line-height: 1.5;
           padding-left: 1rem;
@@ -353,7 +423,7 @@ export default function ProjectAndAchievement() {
           content: "→";
           position: absolute;
           left: 0;
-          color: #475569;
+          color: #4a5f54;
           font-size: .75rem;
         }
 
@@ -368,9 +438,9 @@ export default function ProjectAndAchievement() {
         .pa-link {
           text-decoration: none;
           border-radius: 10px;
-          border: 1px solid rgba(148,163,184,0.22);
-          color: #e2e8f0;
-          background: rgba(15,23,42,0.7);
+          border: 1px solid rgba(255,255,255,0.12);
+          color: #e5efe8;
+          background: rgba(9,20,15,0.7);
           font: 600 11px 'Outfit', sans-serif;
           padding: .5rem .9rem;
           transition: all .22s ease;
@@ -381,14 +451,29 @@ export default function ProjectAndAchievement() {
 
         .pa-link:hover {
           transform: translateY(-2px);
-          border-color: rgba(6,182,212,0.5);
-          background: rgba(6,182,212,0.1);
-          color: #67e8f9;
-          box-shadow: 0 4px 20px rgba(6,182,212,0.15), 0 0 0 1px rgba(6,182,212,0.2);
+          border-color: color-mix(in srgb, var(--proj-accent, #34d399) 55%, transparent);
+          background: color-mix(in srgb, var(--proj-accent, #34d399) 10%, transparent);
+          color: color-mix(in srgb, var(--proj-accent, #34d399) 80%, #fff 20%);
+          box-shadow: 0 4px 20px color-mix(in srgb, var(--proj-accent, #34d399) 18%, transparent);
         }
 
         .pa-link:active {
           transform: translateY(0);
+        }
+
+        /* Primary CTA — solid, only shown when a real live URL exists */
+        .pa-link.pa-link-primary {
+          background: color-mix(in srgb, var(--proj-accent, #34d399) 88%, #000 2%);
+          border-color: transparent;
+          color: #06120c;
+          font-weight: 700;
+        }
+
+        .pa-link.pa-link-primary:hover {
+          transform: translateY(-2px);
+          background: color-mix(in srgb, var(--proj-accent, #34d399) 95%, #fff 5%);
+          color: #06120c;
+          box-shadow: 0 8px 26px color-mix(in srgb, var(--proj-accent, #34d399) 45%, transparent);
         }
 
         /* ── Project switcher ────────────────────────────────── */
@@ -407,7 +492,7 @@ export default function ProjectAndAchievement() {
           border-radius: 999px;
           border: none;
           cursor: pointer;
-          background: rgba(148,163,184,0.2);
+          background: rgba(255,255,255,0.14);
           transition: all .3s cubic-bezier(.22,1,.36,1);
           width: 28px;
           padding: 0;
@@ -418,7 +503,7 @@ export default function ProjectAndAchievement() {
           content: "";
           position: absolute;
           inset: 0;
-          background: linear-gradient(90deg, #6366f1, #06b6d4);
+          background: linear-gradient(90deg, var(--proj-accent, #34d399), #22d3ee);
           transform: scaleX(0);
           transform-origin: left;
           transition: transform .3s ease;
@@ -427,7 +512,7 @@ export default function ProjectAndAchievement() {
 
         .pa-switch-btn.active {
           width: 42px;
-          background: rgba(99,102,241,0.3);
+          background: color-mix(in srgb, var(--proj-accent, #34d399) 28%, transparent);
         }
 
         .pa-switch-btn.active::after {
@@ -435,21 +520,22 @@ export default function ProjectAndAchievement() {
         }
 
         .pa-switch-btn:not(.active):hover {
-          background: rgba(148,163,184,0.4);
+          background: rgba(255,255,255,0.28);
           width: 34px;
         }
 
-        /* ── Feature image center ────────────────────────────── */
+        /* ── Feature image center — the "bombastic" laptop display ── */
         .pa-feature-image {
           position: relative;
           border-radius: 20px;
-          border: 1px solid rgba(255,255,255,0.1);
+          border: 1px solid rgba(255,255,255,0.09);
           min-height: 240px;
-          background: radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.12), rgba(15,23,42,0.92));
+          background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--proj-accent, #34d399) 16%, transparent), rgba(9,20,15,0.92));
           display: grid;
           place-items: center;
           padding: 1rem;
           overflow: hidden;
+          transition: background .4s ease;
         }
 
         .pa-feature-image::after {
@@ -457,7 +543,7 @@ export default function ProjectAndAchievement() {
           position: absolute;
           left: 0; right: 0;
           height: 60%;
-          background: linear-gradient(to bottom, transparent, rgba(6,182,212,0.08), transparent);
+          background: linear-gradient(to bottom, transparent, color-mix(in srgb, var(--proj-accent, #34d399) 14%, transparent), transparent);
           animation: pa-scan 5s ease-in-out infinite;
           pointer-events: none;
         }
@@ -469,27 +555,71 @@ export default function ProjectAndAchievement() {
           100% { transform: translateY(200%); opacity: 0; }
         }
 
+        /* ── Placeholder (no screenshot yet) ─────────────────── */
+        .pa-placeholder {
+          position: relative;
+          display: grid;
+          place-items: center;
+          width: 200px;
+          height: 200px;
+        }
+
+        .pa-placeholder-ring {
+          position: absolute;
+          inset: 0;
+          border-radius: 50%;
+          background: conic-gradient(from 0deg, transparent, color-mix(in srgb, var(--proj-accent, #34d399) 55%, transparent), transparent 62%);
+          animation: pa-rotate 7s linear infinite;
+          -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+          mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 2px));
+        }
+
+        @keyframes pa-rotate {
+          to { transform: rotate(360deg); }
+        }
+
+        .pa-placeholder-core {
+          display: grid;
+          gap: .35rem;
+          justify-items: center;
+          text-align: center;
+          padding: 0 1.2rem;
+        }
+
+        .pa-placeholder-eyebrow {
+          font: 700 10px 'Space Grotesk', monospace;
+          text-transform: uppercase;
+          letter-spacing: .1em;
+          color: color-mix(in srgb, var(--proj-accent, #34d399) 85%, #fff 15%);
+        }
+
+        .pa-placeholder-status {
+          font: 500 11px 'Outfit', sans-serif;
+          color: #6b8277;
+        }
+
         /* ── Device frames ───────────────────────────────────── */
         .pa-device {
           width: 100%;
-          border: 1px solid rgba(148,163,184,0.28);
-          background: rgba(2,6,23,0.92);
+          border: 1px solid rgba(255,255,255,0.14);
+          background: rgba(4,10,7,0.92);
           position: relative;
           box-shadow:
-            0 0 0 1px rgba(255,255,255,0.05) inset,
+            0 0 0 1px rgba(255,255,255,0.04) inset,
             0 24px 48px -12px rgba(0,0,0,0.7),
-            0 0 30px rgba(99,102,241,0.2);
+            0 0 34px color-mix(in srgb, var(--proj-accent, #34d399) 22%, transparent);
+          transition: box-shadow .4s ease;
         }
 
         .pa-device.laptop {
           max-width: 440px;
-          border-radius: 14px;
+          border-radius: 16px;
           padding: .55rem .55rem .8rem;
         }
 
         .pa-device.mobile {
           max-width: 235px;
-          border-radius: 30px;
+          border-radius: 32px;
           padding: .5rem .45rem .65rem;
         }
 
@@ -497,7 +627,7 @@ export default function ProjectAndAchievement() {
           width: 60px;
           height: 6px;
           border-radius: 999px;
-          background: rgba(148,163,184,0.2);
+          background: rgba(255,255,255,0.14);
           margin: 0 auto .35rem;
         }
 
@@ -509,8 +639,8 @@ export default function ProjectAndAchievement() {
         .pa-device-screen {
           overflow: hidden;
           border-radius: 10px;
-          border: 1px solid rgba(148,163,184,0.15);
-          background: #0a0f1e;
+          border: 1px solid rgba(255,255,255,0.1);
+          background: #071410;
         }
 
         .pa-device.mobile .pa-device-screen {
@@ -533,17 +663,18 @@ export default function ProjectAndAchievement() {
         .pa-monitor {
           width: 100%;
           max-width: 440px;
-          border-radius: 14px;
-          border: 1px solid rgba(148,163,184,0.22);
-          background: rgba(2,6,23,0.88);
-          box-shadow: 0 0 32px rgba(99,102,241,0.28);
+          border-radius: 16px;
+          border: 1px solid rgba(255,255,255,0.13);
+          background: rgba(4,10,7,0.88);
+          box-shadow: 0 0 34px color-mix(in srgb, var(--proj-accent, #34d399) 26%, transparent);
           overflow: hidden;
+          transition: box-shadow .4s ease;
         }
 
         .pa-monitor-top {
           height: 20px;
-          border-bottom: 1px solid rgba(148,163,184,0.15);
-          background: rgba(148,163,184,0.08);
+          border-bottom: 1px solid rgba(255,255,255,0.09);
+          background: rgba(255,255,255,0.05);
           display: flex;
           align-items: center;
           gap: 5px;
@@ -574,8 +705,8 @@ export default function ProjectAndAchievement() {
         /* ── Side cards ──────────────────────────────────────── */
         .pa-side-card {
           border-radius: 16px;
-          border: 1px solid rgba(148,163,184,0.16);
-          background: rgba(15,23,42,0.5);
+          border: 1px solid rgba(255,255,255,0.1);
+          background: rgba(9,20,15,0.72);
           padding: .85rem .9rem;
           cursor: default;
           transition: all .25s ease;
@@ -590,29 +721,21 @@ export default function ProjectAndAchievement() {
           left: 0; top: 0; bottom: 0;
           width: 2px;
           border-radius: 0 2px 2px 0;
-          opacity: 0;
+          opacity: 1;
           transition: opacity .25s ease;
         }
 
         .pa-side-card.challenge::before {
-          background: linear-gradient(to bottom, #f87171, rgba(248,113,113,0.2));
+          background: linear-gradient(to bottom, #fb7185, rgba(251,113,133,0.2));
         }
 
         .pa-side-card.solution::before {
           background: linear-gradient(to bottom, #6ee7b7, rgba(110,231,183,0.2));
         }
 
-        .pa-side-card::before {
-          opacity: 1;
-        }
-
-        .pa-side-card {
-          background: rgba(15,23,42,0.72);
-        }
-
         .pa-side-card.challenge {
-          border-color: rgba(248,113,113,0.3);
-          box-shadow: 0 0 20px rgba(248,113,113,0.07);
+          border-color: rgba(251,113,133,0.3);
+          box-shadow: 0 0 20px rgba(251,113,133,0.07);
         }
 
         .pa-side-card.solution {
@@ -635,21 +758,21 @@ export default function ProjectAndAchievement() {
 
         .pa-side-title {
           margin: 0;
-          font: 700 10px 'JetBrains Mono', monospace;
+          font: 700 10px 'Space Grotesk', monospace;
           text-transform: uppercase;
           letter-spacing: .1em;
         }
 
         .pa-panel-arrow {
           font-size: 10px;
-          color: #475569;
+          color: #4a5f54;
           transition: transform .2s ease;
           flex-shrink: 0;
         }
 
         .pa-panel-arrow.open {
           transform: rotate(180deg);
-          color: #64748b;
+          color: #6b8277;
         }
 
         .pa-panel-body {
@@ -684,12 +807,12 @@ export default function ProjectAndAchievement() {
 
         .pa-timeline-wrap::before {
           left: 0;
-          background: linear-gradient(to right, var(--bg-fade, rgba(15,23,42,1)), transparent);
+          background: linear-gradient(to right, var(--bg-fade, rgba(5,15,10,1)), transparent);
         }
 
         .pa-timeline-wrap::after {
           right: 0;
-          background: linear-gradient(to left, var(--bg-fade, rgba(15,23,42,1)), transparent);
+          background: linear-gradient(to left, var(--bg-fade, rgba(5,15,10,1)), transparent);
         }
 
         .pa-timeline-line {
@@ -697,7 +820,7 @@ export default function ProjectAndAchievement() {
           left: 0; right: 0;
           top: calc(2rem + 1.6rem);
           height: 1px;
-          background: linear-gradient(90deg, transparent 2%, rgba(59,130,246,0.5), rgba(139,92,246,0.55), rgba(6,182,212,0.5), transparent 98%);
+          background: linear-gradient(90deg, transparent 2%, rgba(52,211,153,0.5), rgba(167,139,250,0.55), rgba(34,211,238,0.5), transparent 98%);
           z-index: 1;
         }
 
@@ -732,7 +855,7 @@ export default function ProjectAndAchievement() {
         .pa-timeline-year {
           text-align: center;
           color: color-mix(in srgb, var(--tier-color) 86%, #ffffff 24%);
-          font: 700 10px 'JetBrains Mono', monospace;
+          font: 700 10px 'Space Grotesk', monospace;
           letter-spacing: .12em;
           margin-bottom: .5rem;
         }
@@ -761,20 +884,20 @@ export default function ProjectAndAchievement() {
           width: 1px;
           height: 1rem;
           margin: 0 auto .4rem;
-          background: linear-gradient(to bottom, color-mix(in srgb, var(--tier-color) 65%, transparent), rgba(148,163,184,0.08));
+          background: linear-gradient(to bottom, color-mix(in srgb, var(--tier-color) 65%, transparent), rgba(255,255,255,0.06));
         }
 
         /* ── Achievement card ────────────────────────────────── */
         .pa-achievement-card {
-          border: 1px solid color-mix(in srgb, var(--tier-color) 38%, rgba(255,255,255,0.08) 62%);
-          background: linear-gradient(145deg, rgba(255,255,255,0.055), rgba(255,255,255,0.02));
+          border: 1px solid color-mix(in srgb, var(--tier-color) 38%, rgba(255,255,255,0.07) 62%);
+          background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.016));
           border-radius: 16px;
           padding: .8rem .75rem;
           min-height: 160px;
           backdrop-filter: blur(16px);
           -webkit-backdrop-filter: blur(16px);
           box-shadow:
-            0 1px 0 rgba(255,255,255,0.06) inset,
+            0 1px 0 rgba(255,255,255,0.05) inset,
             0 8px 24px -6px rgba(0,0,0,0.5),
             0 0 16px color-mix(in srgb, var(--tier-color) 16%, transparent);
           transition: transform .28s cubic-bezier(.22,1,.36,1), box-shadow .28s ease;
@@ -786,7 +909,7 @@ export default function ProjectAndAchievement() {
         .pa-achievement-card:hover {
           transform: translateY(-5px) scale(1.025);
           box-shadow:
-            0 1px 0 rgba(255,255,255,0.08) inset,
+            0 1px 0 rgba(255,255,255,0.07) inset,
             0 16px 40px -8px rgba(0,0,0,0.6),
             0 0 28px color-mix(in srgb, var(--tier-color) 28%, transparent);
         }
@@ -796,23 +919,35 @@ export default function ProjectAndAchievement() {
           margin-bottom: .4rem;
         }
 
+        /* Tier badge — single, unambiguous statement of rank.
+           Used on both the mini card and the modal, so the
+           award level never needs to be repeated as text. */
+        .pa-tier-badge {
+          display: inline-flex;
+          width: fit-content;
+          align-items: center;
+          padding: .18rem .5rem;
+          border-radius: 999px;
+          margin-bottom: .45rem;
+          font: 700 9.5px 'Space Grotesk', monospace;
+          text-transform: uppercase;
+          letter-spacing: .08em;
+          color: color-mix(in srgb, var(--tier-color) 90%, #ffffff 10%);
+          border: 1px solid color-mix(in srgb, var(--tier-color) 45%, transparent);
+          background: color-mix(in srgb, var(--tier-color) 15%, transparent);
+        }
+
         .pa-achievement-card h4 {
           margin: 0;
-          color: #f1f5f9;
-          font: 700 .85rem 'Outfit', sans-serif;
+          color: #eef5f0;
+          font: 600 .95rem 'Fraunces', serif;
+          font-style: italic;
           line-height: 1.35;
         }
 
-        .pa-achievement-tier {
-          margin: .25rem 0 0;
-          color: color-mix(in srgb, var(--tier-color) 85%, #ffffff 20%);
-          font: 600 .7rem 'JetBrains Mono', monospace;
-          letter-spacing: .04em;
-        }
-
         .pa-achievement-card > p:last-child {
-          margin: .25rem 0 0;
-          color: #64748b;
+          margin: .3rem 0 0;
+          color: #6b8277;
           font-size: .74rem;
           line-height: 1.4;
           display: -webkit-box;
@@ -825,7 +960,7 @@ export default function ProjectAndAchievement() {
           position: fixed;
           inset: 0;
           z-index: 2000;
-          background: rgba(2, 6, 23, 0.78);
+          background: rgba(4, 10, 7, 0.8);
           backdrop-filter: blur(12px);
           -webkit-backdrop-filter: blur(12px);
           display: grid;
@@ -835,9 +970,9 @@ export default function ProjectAndAchievement() {
 
         .pa-achievement-modal-card {
           width: min(920px, 96vw);
-          border-radius: 18px;
-          border: 1px solid rgba(148,163,184,0.22);
-          background: linear-gradient(145deg, rgba(15,23,42,0.96), rgba(2,6,23,0.94));
+          border-radius: 20px;
+          border: 1px solid rgba(255,255,255,0.1);
+          background: linear-gradient(145deg, rgba(9,20,15,0.96), rgba(4,10,7,0.94));
           box-shadow: 0 32px 80px rgba(0,0,0,0.55);
           overflow: hidden;
         }
@@ -849,8 +984,8 @@ export default function ProjectAndAchievement() {
 
         .pa-achievement-modal-media {
           min-height: 280px;
-          background: rgba(15,23,42,0.8);
-          border-right: 1px solid rgba(148,163,184,0.14);
+          background: rgba(9,20,15,0.8);
+          border-right: 1px solid rgba(255,255,255,0.08);
         }
 
         .pa-achievement-modal-media img {
@@ -863,7 +998,8 @@ export default function ProjectAndAchievement() {
         .pa-achievement-modal-content {
           padding: 1rem 1rem 1.1rem;
           display: grid;
-          gap: .65rem;
+          gap: .7rem;
+          align-content: start;
         }
 
         .pa-achievement-modal-top {
@@ -874,9 +1010,9 @@ export default function ProjectAndAchievement() {
         }
 
         .pa-achievement-modal-close {
-          border: 1px solid rgba(148,163,184,0.22);
-          background: rgba(15,23,42,0.75);
-          color: #cbd5e1;
+          border: 1px solid rgba(255,255,255,0.12);
+          background: rgba(9,20,15,0.75);
+          color: #cdd9d2;
           border-radius: 10px;
           padding: .35rem .55rem;
           cursor: pointer;
@@ -885,16 +1021,66 @@ export default function ProjectAndAchievement() {
 
         .pa-achievement-modal-title {
           margin: 0;
-          color: #f8fafc;
-          font: 800 1.05rem 'Outfit', sans-serif;
+          color: #f4f9f5;
+          font: 600 1.15rem 'Fraunces', serif;
+          font-style: italic;
           line-height: 1.3;
+        }
+
+        /* Organizer · project — one quiet meta line instead of
+           repeating the award name in a second sentence. */
+        .pa-achievement-modal-meta {
+          margin: -.35rem 0 0;
+          color: #6b8277;
+          font: 500 .74rem 'Space Grotesk', monospace;
+          letter-spacing: .02em;
         }
 
         .pa-achievement-modal-sub {
           margin: 0;
-          color: #94a3b8;
+          color: #8fa79b;
           font-size: .82rem;
           line-height: 1.5;
+        }
+
+        /* Role — labelled the same way tech/highlights are elsewhere,
+           so the contributor's part reads as its own fact, not folded
+           into the summary paragraph. */
+        .pa-achievement-modal-role {
+          margin: 0;
+          font-size: .82rem;
+          line-height: 1.55;
+          color: #cdd9d2;
+        }
+
+        .pa-modal-field-label {
+          display: block;
+          margin-bottom: .3rem;
+          color: #6b8277;
+          font: 700 9.5px 'Space Grotesk', monospace;
+          text-transform: uppercase;
+          letter-spacing: .1em;
+        }
+
+        /* Award chips — the single place recognitions are listed.
+           Icon + label per chip; nothing above repeats these words. */
+        .pa-award-chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: .4rem;
+        }
+
+        .pa-award-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: .35rem;
+          border-radius: 999px;
+          border: 1px solid rgba(251,191,36,0.3);
+          background: linear-gradient(135deg, rgba(251,191,36,0.1), rgba(253,224,71,0.04));
+          color: #fcd34d;
+          padding: .32rem .65rem;
+          font: 600 .72rem 'Space Grotesk', monospace;
+          letter-spacing: .01em;
         }
 
         .pa-achievement-modal-chip {
@@ -903,11 +1089,11 @@ export default function ProjectAndAchievement() {
           gap: .35rem;
           width: fit-content;
           border-radius: 999px;
-          border: 1px solid rgba(148,163,184,0.24);
-          background: rgba(15,23,42,0.7);
-          color: #cbd5e1;
+          border: 1px solid rgba(255,255,255,0.14);
+          background: rgba(9,20,15,0.7);
+          color: #cdd9d2;
           padding: .25rem .55rem;
-          font: 600 .65rem 'JetBrains Mono', monospace;
+          font: 600 .65rem 'Space Grotesk', monospace;
           text-transform: uppercase;
           letter-spacing: .08em;
         }
@@ -920,7 +1106,7 @@ export default function ProjectAndAchievement() {
           .pa-achievement-modal-media {
             min-height: 220px;
             border-right: none;
-            border-bottom: 1px solid rgba(148,163,184,0.14);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
           }
         }
 
@@ -947,7 +1133,7 @@ export default function ProjectAndAchievement() {
       <section className="pa-shell section-y page-x">
         <div className="container-6xl">
 
-          {/* ── Section header — untouched ── */}
+          {/* ── Section header ── */}
           <SectionHeader
             align="center"
             label="my work"
@@ -956,7 +1142,8 @@ export default function ProjectAndAchievement() {
                 Featured{" "}
                 <span
                   style={{
-                    background: "linear-gradient(135deg, #06b6d4 0%, #6366f1 100%)",
+                    fontStyle: "italic",
+                    background: "linear-gradient(135deg, #34d399 0%, #22d3ee 100%)",
                     WebkitBackgroundClip: "text",
                     WebkitTextFillColor: "transparent",
                     backgroundClip: "text",
@@ -970,7 +1157,13 @@ export default function ProjectAndAchievement() {
           />
 
           {activeProject && (
-            <>
+            <div
+              className="pa-project-frame"
+              style={{
+                "--proj-accent": activeProject.accent || "#34d399",
+                "--proj-accent-glow": activeProject.accentGlow || "rgba(52,211,153,0.35)",
+              }}
+            >
               <div
                 className="pa-glass pa-feature-wrap"
                 onMouseEnter={() => setIsPaused(true)}
@@ -980,9 +1173,12 @@ export default function ProjectAndAchievement() {
                   className={`pa-feature-grid pa-content-transition${isTransitioning ? " is-hiding" : ""}`}
                   key={activeProject.id}
                 >
-                {/* ── Left ── */}
+                {/* ── Left: description ── */}
                 <div className="pa-feature-left">
-                  <span className="pa-badge">Featured Project</span>
+                  <div className="pa-eyebrow-row">
+                    <span className="pa-badge">{activeProject.category}</span>
+                    <span className="pa-status-pill">{activeProject.status}</span>
+                  </div>
                   <h3>{activeProject.title}</h3>
                   <p>{activeProject.tagline}</p>
 
@@ -1002,32 +1198,42 @@ export default function ProjectAndAchievement() {
                   </div>
 
                   <div className="pa-action-row">
-                    {activeProject.demo && (
-                      <a className="pa-link" href={activeProject.demo} target="_blank" rel="noreferrer">
-                        ↗ Live Demo
+                    {activeProject.liveUrl && (
+                      <a
+                        className="pa-link pa-link-primary"
+                        href={activeProject.liveUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        ↗ Visit Live Site
+                      </a>
+                    )}
+                    {activeProject.videoUrl && (
+                      <a className="pa-link" href={activeProject.videoUrl} target="_blank" rel="noreferrer">
+                        ▶ Watch Demo
                       </a>
                     )}
                     {activeProject.github && (
                       <a className="pa-link" href={activeProject.github} target="_blank" rel="noreferrer">
-                        ↗ GitHub
+                        {"</>"} View Code
                       </a>
                     )}
                   </div>
 
                 </div>
 
-                {/* ── Center: image/video ── */}
+                {/* ── Center: the laptop/monitor display ── */}
                 <div className="pa-feature-image">
-                  {demoEmbedUrl ? (
+                  {videoEmbedUrl ? (
                     <div className="pa-monitor">
                       <div className="pa-monitor-top">
-                        <div className="pa-monitor-dot" style={{ background: "#f87171" }} />
+                        <div className="pa-monitor-dot" style={{ background: "#fb7185" }} />
                         <div className="pa-monitor-dot" style={{ background: "#fbbf24" }} />
-                        <div className="pa-monitor-dot" style={{ background: "#4ade80" }} />
+                        <div className="pa-monitor-dot" style={{ background: "#34d399" }} />
                       </div>
                       <iframe
                         className="pa-monitor-video"
-                        src={demoEmbedUrl}
+                        src={videoEmbedUrl}
                         title={`${activeProject.title} demo`}
                         loading="lazy"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
@@ -1035,7 +1241,7 @@ export default function ProjectAndAchievement() {
                         allowFullScreen
                       />
                     </div>
-                  ) : (
+                  ) : activeProject.images?.hero ? (
                     <div className={`pa-device ${showMobileFrame ? "mobile" : "laptop"}`}>
                       <div className="pa-device-notch" />
                       <div className="pa-device-screen">
@@ -1046,15 +1252,16 @@ export default function ProjectAndAchievement() {
                         />
                       </div>
                     </div>
+                  ) : (
+                    <ProjectPlaceholder category={activeProject.category} status={activeProject.status} />
                   )}
                 </div>
 
-                {/* ── Right: collapsible panels ── */}
+                {/* ── Right: challenge / solution panels ── */}
                 <div className="pa-side-stack">
-                  {/* Challenge panel */}
                   <div className="pa-side-card challenge">
                     <div className="pa-side-toggle">
-                      <h4 className="pa-side-title" style={{ color: "#fca5a5" }}>Challenge</h4>
+                      <h4 className="pa-side-title" style={{ color: "#fda4af" }}>Challenge</h4>
                     </div>
                     <div className="pa-panel-body">
                       <ul className="pa-point-list">
@@ -1065,7 +1272,6 @@ export default function ProjectAndAchievement() {
                     </div>
                   </div>
 
-                  {/* Solution panel */}
                   <div className="pa-side-card solution">
                     <div className="pa-side-toggle">
                       <h4 className="pa-side-title" style={{ color: "#6ee7b7" }}>Solution</h4>
@@ -1082,7 +1288,7 @@ export default function ProjectAndAchievement() {
               </div>
               </div>
 
-              {/* Project switcher dots outside feature box */}
+              {/* Project switcher dots — inherits --proj-accent from this frame */}
               <div className="pa-switch-row">
                 {projects.map((p, idx) => (
                   <button
@@ -1094,13 +1300,11 @@ export default function ProjectAndAchievement() {
                   />
                 ))}
               </div>
-            </>
+            </div>
           )}
 
           {/* ── Achievements section ── */}
           <div className="pa-achievement-wrap">
-
-            {/* Section header — untouched */}
             <SectionHeader
               align="center"
               label="my journey"
@@ -1109,7 +1313,8 @@ export default function ProjectAndAchievement() {
                   Achievements &{" "}
                   <span
                     style={{
-                      background: "linear-gradient(135deg, #a5b4fc 0%, #22d3ee 100%)",
+                      fontStyle: "italic",
+                      background: "linear-gradient(135deg, #34d399 0%, #22d3ee 100%)",
                       WebkitBackgroundClip: "text",
                       WebkitTextFillColor: "transparent",
                       backgroundClip: "text",
@@ -1143,6 +1348,7 @@ export default function ProjectAndAchievement() {
             >
               <div
                 className="pa-achievement-modal-card"
+                style={{ "--tier-color": getTierColor(activeAchievement.tier) }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className="pa-achievement-modal-grid">
@@ -1166,20 +1372,51 @@ export default function ProjectAndAchievement() {
                       </button>
                     </div>
 
-                    <h3 className="pa-achievement-modal-title">
-                      {activeAchievement.icon} {activeAchievement.competition}
-                    </h3>
-                    <p className="pa-achievement-tier">{activeAchievement.achievement}</p>
-                    <p className="pa-achievement-modal-sub">{activeAchievement.project}</p>
+                    <span className="pa-tier-badge">
+                      {activeAchievement.icon} {activeAchievement.tier}
+                    </span>
+
+                    <h3 className="pa-achievement-modal-title">{activeAchievement.competition}</h3>
+
+                    {(activeAchievement.organizer || activeAchievement.project) && (
+                      <p className="pa-achievement-modal-meta">
+                        {[activeAchievement.organizer, activeAchievement.project]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
+
                     {activeAchievement.projectSummary && (
                       <p className="pa-achievement-modal-sub">{activeAchievement.projectSummary}</p>
                     )}
+
+                    {activeAchievement.role && (
+                      <p className="pa-achievement-modal-role">
+                        <span className="pa-modal-field-label">Role</span>
+                        {activeAchievement.role}
+                      </p>
+                    )}
+
+                    {(activeAchievement.tech || []).length > 0 && (
+                      <div>
+                        <span className="pa-modal-field-label">Stack</span>
+                        <div className="pa-tech-row" style={{ marginTop: 0 }}>
+                          {activeAchievement.tech.map((t) => (
+                            <span key={t} className="pa-tech-pill">{t}</span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {(activeAchievement.impact || []).length > 0 && (
-                      <ul className="pa-point-list" style={{ marginTop: ".2rem" }}>
-                        {activeAchievement.impact.map((point, idx) => (
-                          <li key={`impact-${idx}`}>{point}</li>
-                        ))}
-                      </ul>
+                      <div>
+                        <span className="pa-modal-field-label">Recognition</span>
+                        <div className="pa-award-chips">
+                          {activeAchievement.impact.map((point, idx) => (
+                            <span key={`impact-${idx}`} className="pa-award-chip">🏅 {point}</span>
+                          ))}
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>

@@ -1,8 +1,25 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Tilt from "react-parallax-tilt";
 import { timelineData } from "./data/growthJourney";
 import SectionHeader from "./components/SectionHeader";
+
+/* ─────────────────────────────────────────────
+   TOKENS — same "canopy & roots" palette as Journey.jsx
+   so the whole page reads as one connected world:
+   organic (moss/growth) + precise (circuit/data).
+───────────────────────────────────────────── */
+const MOSS = "#34d399";
+const TEAL = "#22d3ee";
+const AMBER = "#fbbf24";
+const INK = "#eef5f0";
+const MUTED = "#8fa79b";
+const MUTED_DARK = "#4a5f54";
+const BG_DEEP = "#050f0a";
+const RAIL_TRACK = "rgba(143,167,155,0.10)";
+
+const RAIL_GRADIENT = `linear-gradient(180deg, ${MOSS} 0%, ${TEAL} 45%, ${AMBER} 100%)`;
+const HERO_GRADIENT = `linear-gradient(135deg, ${MOSS} 0%, ${TEAL} 55%, ${AMBER} 100%)`;
 
 /* ─────────────────────────────────────────────
    HOOKS
@@ -13,10 +30,10 @@ function useIntersection(ref, options = {}) {
     if (!ref.current) return;
     const obs = new IntersectionObserver(([e]) => {
       if (e.isIntersecting) { setVisible(true); obs.disconnect(); }
-    }, { threshold: 0.1, ...options });
+    }, { threshold: 0.08, ...options });
     obs.observe(ref.current);
     return () => obs.disconnect();
-  }, [ref, options]);
+  }, [ref]);
   return visible;
 }
 
@@ -27,9 +44,7 @@ function useScrollProgress(containerRef) {
       if (!containerRef.current) return;
       const rect = containerRef.current.getBoundingClientRect();
       const windowH = window.innerHeight;
-      // Trigger at 70% of viewport height — node lights up when it's well into view
-      const activationLine = windowH * 0.7;
-      // How far past the activation line is the top of the container
+      const activationLine = windowH * 0.65;
       const scrolled = activationLine - rect.top;
       const total = Math.max(1, rect.height);
       setProgress(Math.min(1, Math.max(0, scrolled / total)));
@@ -52,16 +67,27 @@ function useIsMobile() {
   return isMobile;
 }
 
+function useMousePosition() {
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  useEffect(() => {
+    const handler = (e) => setPos({ x: e.clientX, y: e.clientY });
+    window.addEventListener("mousemove", handler, { passive: true });
+    return () => window.removeEventListener("mousemove", handler);
+  }, []);
+  return pos;
+}
+
 function getMilestoneImages(milestone) {
-  if (Array.isArray(milestone.images) && milestone.images.length > 0) {
-    return milestone.images.filter(Boolean);
-  }
+  if (Array.isArray(milestone.images) && milestone.images.length > 0) return milestone.images.filter(Boolean);
   if (milestone.image) return [milestone.image];
+  if (milestone.coverImage) return [milestone.coverImage];
   return [];
 }
 
 /* ─────────────────────────────────────────────
-   PARTICLE BACKGROUND
+   PARTICLES — "spores drifting past a circuit board"
+   Same idea as before, recolored to moss/teal/amber and
+   slowed down so it reads as organic drift, not tech noise.
 ───────────────────────────────────────────── */
 function Particles() {
   const canvasRef = useRef(null);
@@ -70,22 +96,19 @@ function Particles() {
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     let raf;
-    const resize = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-    };
+    const resize = () => { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; };
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
 
-    const pts = Array.from({ length: 40 }, () => ({
+    const pts = Array.from({ length: 46 }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      vx: (Math.random() - 0.5) * 0.2,
-      vy: (Math.random() - 0.5) * 0.2,
-      r: Math.random() * 1.0 + 0.3,
-      a: Math.random() * 0.25 + 0.05,
-      c: Math.random() > 0.5 ? "6,182,212" : "139,92,246",
+      vx: (Math.random() - 0.5) * 0.14,
+      vy: (Math.random() - 0.5) * 0.14,
+      r: Math.random() * 1.2 + 0.3,
+      a: Math.random() * 0.26 + 0.06,
+      c: ["52,211,153", "34,211,238", "251,191,36"][Math.floor(Math.random() * 3)],
     }));
 
     const draw = () => {
@@ -98,14 +121,15 @@ function Particles() {
         ctx.fillStyle = `rgba(${p.c},${p.a})`;
         ctx.fill();
       });
+      // Faint traces between nearby spores — the "circuit" half of the motif.
       for (let i = 0; i < pts.length; i++)
         for (let j = i + 1; j < pts.length; j++) {
           const d = Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y);
-          if (d < 80) {
+          if (d < 85) {
             ctx.beginPath();
             ctx.moveTo(pts[i].x, pts[i].y);
             ctx.lineTo(pts[j].x, pts[j].y);
-            ctx.strokeStyle = `rgba(99,102,241,${0.05 * (1 - d / 80)})`;
+            ctx.strokeStyle = `rgba(52,211,153,${0.05 * (1 - d / 85)})`;
             ctx.lineWidth = 0.5;
             ctx.stroke();
           }
@@ -115,21 +139,40 @@ function Particles() {
     draw();
     return () => { cancelAnimationFrame(raf); ro.disconnect(); };
   }, []);
-  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />;
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" style={{ opacity: 0.7 }} />;
+}
+
+function CursorGlow() {
+  const pos = useMousePosition();
+  return (
+    <div
+      className="fixed pointer-events-none z-0"
+      style={{
+        left: pos.x - 200,
+        top: pos.y - 200,
+        width: 400,
+        height: 400,
+        borderRadius: "50%",
+        background: `radial-gradient(circle, rgba(52,211,153,0.05) 0%, transparent 70%)`,
+        transition: "left 0.4s ease, top 0.4s ease",
+      }}
+    />
+  );
 }
 
 /* ─────────────────────────────────────────────
-   TECH TAG
+   TECH TAG — mono pill, unchanged in shape, recolored
 ───────────────────────────────────────────── */
-function Tag({ label, accent }) {
+function Tag({ label, accent = MOSS }) {
   return (
     <span
-      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-medium border transition-all duration-300"
+      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-medium border"
       style={{
         color: accent,
-        borderColor: `${accent}40`,
-        background: `${accent}10`,
-        boxShadow: `0 0 8px ${accent}20`,
+        borderColor: `${accent}35`,
+        background: `linear-gradient(135deg, ${accent}12, ${accent}06)`,
+        boxShadow: `inset 0 0 8px ${accent}10, 0 0 6px ${accent}10`,
+        letterSpacing: "0.03em",
       }}
     >
       {label}
@@ -137,18 +180,17 @@ function Tag({ label, accent }) {
   );
 }
 
-/* ─────────────────────────────────────────────
-   AWARD BADGE
-───────────────────────────────────────────── */
-function Badge({ label, color }) {
+function Badge({ label, color = AMBER }) {
   return (
     <span
-      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border"
+      className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider border"
       style={{
-        color: color,
-        borderColor: `${color}50`,
-        background: `${color}15`,
-        animation: "badge-pulse 2.5s ease-in-out infinite",
+        color,
+        borderColor: `${color}45`,
+        background: `linear-gradient(135deg, ${color}18, ${color}08)`,
+        boxShadow: `0 0 12px ${color}18`,
+        animation: "badge-pulse 3s ease-in-out infinite",
+        letterSpacing: "0.06em",
       }}
     >
       {label}
@@ -157,12 +199,115 @@ function Badge({ label, color }) {
 }
 
 /* ─────────────────────────────────────────────
-   JOURNEY MODAL (FULL-SCREEN)
+   GROWTH GLYPH — a small standalone mark built from the same
+   rings + radiating legs + diamond core as the timeline nodes.
+   Used to dress up any spot with no photo, so "no image" still
+   looks designed rather than like a missing asset.
+───────────────────────────────────────────── */
+function GrowthGlyph({ accent, size = 56 }) {
+  const legs = [0, 60, 120, 180, 240, 300];
+  return (
+    <svg width={size} height={size} viewBox="-30 -30 60 60" style={{ overflow: "visible" }}>
+      <circle r="21" fill="none" stroke={`${accent}45`} strokeWidth="0.7" strokeDasharray="2.5 4" />
+      <circle r="14" fill="none" stroke={`${accent}30`} strokeWidth="0.7" />
+      {legs.map((deg) => {
+        const rad = (deg * Math.PI) / 180;
+        const x1 = Math.cos(rad) * 14, y1 = Math.sin(rad) * 14;
+        const x2 = Math.cos(rad) * 27, y2 = Math.sin(rad) * 27;
+        return <line key={deg} x1={x1} y1={y1} x2={x2} y2={y2} stroke={`${accent}30`} strokeWidth="1" />;
+      })}
+      <g transform="rotate(45)">
+        <rect x="-7" y="-7" width="14" height="14" rx="3" fill={`${accent}18`} stroke={accent} strokeWidth="1.4" />
+      </g>
+    </svg>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   IMAGE CAROUSEL — unchanged mechanics, recolored chrome
+───────────────────────────────────────────── */
+function ImageCarousel({ images, accent, title, embedded = false }) {
+  const [idx, setIdx] = useState(0);
+  const [fading, setFading] = useState(false);
+
+  const goTo = useCallback((i) => {
+    if (i === idx) return;
+    setFading(true);
+    setTimeout(() => { setIdx(i); setFading(false); }, 220);
+  }, [idx]);
+
+  if (images.length === 0) return (
+    <div className="relative w-full h-full flex flex-col items-center justify-center gap-4 overflow-hidden">
+      <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at 50% 42%, ${accent}14 0%, transparent 65%)` }} />
+      <div className="absolute inset-0" style={{ backgroundImage: `radial-gradient(${accent}18 1px, transparent 1px)`, backgroundSize: "22px 22px", opacity: 0.35, maskImage: "radial-gradient(ellipse at 50% 45%, black 0%, transparent 70%)" }} />
+      <div className="relative" style={{ animation: "float-slow 7s ease-in-out infinite" }}>
+        <GrowthGlyph accent={accent} size={72} />
+      </div>
+      <div className="relative text-center px-6">
+        <p className="text-[13px] font-medium mb-1" style={{ color: "#cdd9d2" }}>No preview yet</p>
+        <p className="text-[11px] font-mono" style={{ color: MUTED }}>the story's all in the details below ↓</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className={`relative w-full flex flex-col ${embedded ? "h-full min-h-[280px]" : "h-full"}`}>
+      <div className={`relative overflow-hidden ${embedded ? "flex-1 min-h-[220px]" : "flex-1 rounded-xl"}`}>
+        <img
+          src={images[idx]}
+          alt={`${title} — ${idx + 1}`}
+          className="w-full h-full object-cover"
+          style={{ opacity: fading ? 0 : 1, transition: "opacity 0.22s ease" }}
+        />
+        <div className="absolute inset-0 pointer-events-none"
+          style={{ background: `linear-gradient(to top, rgba(5,15,10,0.75) 0%, transparent 40%)` }} />
+
+        {images.length > 1 && (
+          <div className="absolute bottom-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-mono"
+            style={{ background: "rgba(5,15,10,0.65)", color: "rgba(238,245,240,0.65)", backdropFilter: "blur(8px)" }}>
+            {idx + 1} / {images.length}
+          </div>
+        )}
+
+        {images.length > 1 && (
+          <>
+            <button onClick={() => goTo((idx - 1 + images.length) % images.length)}
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-xs transition-all hover:scale-110"
+              style={{ background: "rgba(5,15,10,0.6)", color: "rgba(238,245,240,0.85)", backdropFilter: "blur(8px)" }}>‹</button>
+            <button onClick={() => goTo((idx + 1) % images.length)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-xs transition-all hover:scale-110"
+              style={{ background: "rgba(5,15,10,0.6)", color: "rgba(238,245,240,0.85)", backdropFilter: "blur(8px)" }}>›</button>
+          </>
+        )}
+      </div>
+
+      {images.length > 1 && (
+        <div className={`flex gap-2 overflow-x-auto pb-1 scrollbar-none ${embedded ? "mt-2 px-1 flex-shrink-0" : "mt-2"}`}>
+          {images.map((src, i) => (
+            <button key={i} onClick={() => goTo(i)}
+              className="shrink-0 rounded-lg overflow-hidden transition-all duration-200"
+              style={{
+                width: 58, height: 40,
+                outline: i === idx ? `2px solid ${accent}` : "2px solid transparent",
+                outlineOffset: 1,
+                opacity: i === idx ? 1 : 0.45,
+                transform: i === idx ? "scale(1.05)" : "scale(1)",
+              }}>
+              <img src={src} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   JOURNEY MODAL — same layout, recolored to the forest/PCB palette
 ───────────────────────────────────────────── */
 function JourneyModal({ milestone, accent, onClose }) {
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [imgIdx, setImgIdx] = useState(0);
 
   useEffect(() => {
     if (milestone) {
@@ -171,10 +316,7 @@ function JourneyModal({ milestone, accent, onClose }) {
       document.body.style.overflow = "hidden";
     } else {
       setVisible(false);
-      const t = setTimeout(() => {
-        setMounted(false);
-        document.body.style.overflow = "";
-      }, 340);
+      const t = setTimeout(() => { setMounted(false); document.body.style.overflow = ""; }, 340);
       return () => clearTimeout(t);
     }
     return () => { document.body.style.overflow = ""; };
@@ -186,112 +328,95 @@ function JourneyModal({ milestone, accent, onClose }) {
     return () => window.removeEventListener("keydown", esc);
   }, [onClose]);
 
-  useEffect(() => { setImgIdx(0); }, [milestone?.title]);
-
   if (!mounted || !milestone) return null;
-
   const images = getMilestoneImages(milestone);
 
   return createPortal(
     <>
       <div
+        onClick={onClose}
         style={{
           position: "fixed", inset: 0, zIndex: 99998,
-          background: visible ? "rgba(4,9,20,0.92)" : "rgba(4,9,20,0)",
-          backdropFilter: visible ? "blur(20px)" : "blur(0px)",
-          WebkitBackdropFilter: visible ? "blur(20px)" : "blur(0px)",
-          transition: "background 0.34s ease, backdrop-filter 0.34s ease",
+          background: visible ? "rgba(4,10,7,0.9)" : "rgba(4,10,7,0)",
+          backdropFilter: visible ? "blur(24px) saturate(0.8)" : "blur(0px)",
+          WebkitBackdropFilter: visible ? "blur(24px) saturate(0.8)" : "blur(0px)",
+          transition: "background 0.36s ease, backdrop-filter 0.36s ease",
         }}
-        onClick={onClose}
       />
-      <div
-        style={{
-          position: "fixed", inset: 0, zIndex: 99999,
-          display: "flex", alignItems: "flex-start", justifyContent: "center",
-          overflowY: "auto", padding: "1rem", pointerEvents: "none",
-        }}
-      >
-        <div
-          style={{
-            width: "100%", maxWidth: 980, margin: "auto", pointerEvents: "all",
-            opacity: visible ? 1 : 0,
-            transform: visible ? "scale(1) translateY(0)" : "scale(0.93) translateY(24px)",
-            transition: "opacity 0.34s cubic-bezier(0.22,1,0.36,1), transform 0.34s cubic-bezier(0.22,1,0.36,1)",
-          }}
-        >
-          <div
-            className="relative rounded-2xl overflow-hidden"
-            style={{
-              background: "linear-gradient(145deg,#060d1c,#0a1220)",
-              border: `1px solid ${accent}38`,
-              boxShadow: `0 48px 120px -24px ${accent}45, 0 0 0 1px ${accent}14`,
-              maxHeight: "90vh", overflowY: "auto",
-            }}
-          >
-            <div style={{ height: 2, width: "100%", background: `linear-gradient(90deg,transparent,${accent},transparent)` }} />
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95"
-              style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#94a3b8" }}
-              aria-label="Close"
-            >✕</button>
 
-            <div className="p-4 md:p-5">
-              {images.length > 0 && (
-                <div className="flex gap-2 md:gap-3 overflow-x-auto pb-2 mb-4">
-                  {images.map((src, i) => (
-                    <button
-                      key={src + i}
-                      onClick={(e) => { e.stopPropagation(); setImgIdx(i); }}
-                      className="shrink-0 rounded-xl overflow-hidden border relative"
-                      style={{
-                        width: 130,
-                        height: 86,
-                        borderColor: i === imgIdx ? accent : "rgba(148,163,184,0.35)",
-                        boxShadow: i === imgIdx ? `0 0 14px ${accent}60` : "none",
-                      }}
-                    >
-                      <img src={src} alt="" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              )}
+      <div style={{
+        position: "fixed", inset: 0, zIndex: 99999,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        padding: "1rem", overflowY: "auto", pointerEvents: "none",
+      }}>
+        <div style={{
+          width: "100%", maxWidth: 1020, margin: "auto",
+          pointerEvents: "all",
+          opacity: visible ? 1 : 0,
+          transform: visible ? "scale(1) translateY(0)" : "scale(0.94) translateY(28px)",
+          transition: "opacity 0.36s cubic-bezier(0.22,1,0.36,1), transform 0.36s cubic-bezier(0.22,1,0.36,1)",
+        }}>
+          <div className="relative rounded-2xl overflow-hidden" style={{
+            background: "linear-gradient(160deg, #070f0c 0%, #050b09 100%)",
+            border: `1px solid ${accent}30`,
+            boxShadow: `0 60px 140px -32px ${accent}38, 0 0 0 1px ${accent}12, inset 0 1px 0 rgba(255,255,255,0.04)`,
+            maxHeight: "88vh", overflowY: "auto",
+          }}>
+            <div style={{ height: 3, background: `linear-gradient(90deg, transparent 0%, ${accent} 40%, ${AMBER} 80%, transparent 100%)` }} />
 
-              <div className="grid md:grid-cols-[1.2fr_.8fr] gap-4 md:gap-5">
+            <button onClick={onClose}
+              className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 hover:rotate-90"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: MUTED,
+                transition: "all 0.25s ease",
+              }}
+              aria-label="Close">✕</button>
+
+            <div className="p-5 md:p-7">
+              <div className="flex flex-wrap items-center gap-2.5 mb-5">
+                <span className="text-[10px] font-mono uppercase tracking-[0.15em] px-3 py-1 rounded-full"
+                  style={{ color: accent, background: `${accent}15`, border: `1px solid ${accent}25` }}>
+                  {milestone.category}
+                </span>
+                <Badge label={milestone.badge} color={milestone.badgeColor || AMBER} />
+                {milestone.link && (
+                  <a href={milestone.link} target="_blank" rel="noopener noreferrer"
+                    className="ml-auto inline-flex items-center gap-1.5 text-[11px] font-mono px-3 py-1 rounded-full border transition-all hover:scale-105"
+                    style={{ color: accent, borderColor: `${accent}30`, background: `${accent}10` }}>
+                    <span>↗</span>
+                    <span>{milestone.link.includes("github") ? "GitHub" : "View Link"}</span>
+                  </a>
+                )}
+              </div>
+
+              <div className="grid md:grid-cols-[1.1fr_0.9fr] gap-5">
                 <div className="relative rounded-2xl overflow-hidden border"
-                  style={{ borderColor: `${accent}40`, minHeight: 260, background: "rgba(2,6,23,0.9)" }}>
-                  {images.length > 0 ? (
-                    <img src={images[imgIdx]} alt={milestone.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm">
-                      No media preview
-                    </div>
-                  )}
-                  <div className="absolute inset-0 pointer-events-none"
-                    style={{ background: "linear-gradient(to top, rgba(2,6,23,0.8), rgba(2,6,23,0.06))" }} />
+                  style={{ borderColor: `${accent}25`, minHeight: 280, background: "rgba(5,15,10,0.85)" }}>
+                  <ImageCarousel images={images} accent={accent} title={milestone.title} />
                 </div>
 
-                <div className="rounded-2xl border p-4 md:p-5 space-y-4"
-                  style={{ borderColor: `${accent}35`, background: "rgba(15,23,42,0.65)" }}>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-xs font-mono uppercase tracking-widest px-2.5 py-0.5 rounded"
-                      style={{ color: accent, background: `${accent}18` }}>{milestone.category}</span>
-                    <Badge label={milestone.badge} color={milestone.badgeColor} />
-                  </div>
-
+                <div className="flex flex-col gap-4">
                   <div>
-                    <h3 className="font-display text-xl md:text-2xl font-black leading-snug mb-2"
-                      style={{ color: "#f9fafb", letterSpacing: "-0.02em" }}>{milestone.title}</h3>
-                    <p className="text-slate-400 text-sm leading-relaxed">{milestone.description}</p>
+                    <h3 className="font-display italic text-2xl md:text-3xl font-semibold leading-tight mb-2"
+                      style={{ color: INK, letterSpacing: "-0.01em" }}>
+                      {milestone.title}
+                    </h3>
+                    <p style={{ color: MUTED }} className="text-[13.5px] leading-relaxed">{milestone.description}</p>
                   </div>
 
                   {milestone.details?.length > 0 && (
-                    <div>
-                      <div className="text-xs font-mono uppercase tracking-widest mb-2" style={{ color: accent }}>▸ Highlights</div>
-                      <ul className="space-y-1.5">
+                    <div className="rounded-xl border p-4"
+                      style={{ borderColor: `${accent}20`, background: `${accent}07` }}>
+                      <div className="text-[10px] font-mono uppercase tracking-[0.12em] mb-3" style={{ color: accent }}>
+                        ▸ Highlights
+                      </div>
+                      <ul className="space-y-2">
                         {milestone.details.map((d, i) => (
-                          <li key={i} className="flex items-start gap-2 text-sm text-slate-300">
-                            <span className="mt-0.5" style={{ color: accent }}>›</span>{d}
+                          <li key={i} className="flex items-start gap-2.5 text-[13px] leading-snug" style={{ color: "#cdd9d2" }}>
+                            <span className="mt-0.5 text-xs shrink-0" style={{ color: accent }}>◆</span>
+                            {d}
                           </li>
                         ))}
                       </ul>
@@ -300,22 +425,12 @@ function JourneyModal({ milestone, accent, onClose }) {
 
                   {milestone.tags?.length > 0 && (
                     <div>
-                      <div className="text-xs font-mono uppercase tracking-widest mb-2" style={{ color: accent }}>▸ Focus Areas</div>
+                      <div className="text-[10px] font-mono uppercase tracking-[0.12em] mb-2" style={{ color: accent }}>
+                        ▸ Focus Areas
+                      </div>
                       <div className="flex flex-wrap gap-1.5">
                         {milestone.tags.map((t) => <Tag key={t} label={t} accent={accent} />)}
                       </div>
-                    </div>
-                  )}
-
-                  {milestone.link && (
-                    <div className="pt-1 border-t border-white/5">
-                      <a href={milestone.link} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-mono mt-3" style={{ color: accent }}>
-                        <span>↗</span>
-                        <span className="underline underline-offset-2">
-                          {milestone.link.includes("github") ? "View on GitHub" : "Open Link"}
-                        </span>
-                      </a>
                     </div>
                   )}
                 </div>
@@ -329,8 +444,18 @@ function JourneyModal({ milestone, accent, onClose }) {
   );
 }
 
+function StatChip({ value, label, accent }) {
+  return (
+    <div className="flex flex-col items-center px-3 py-2 rounded-lg border"
+      style={{ borderColor: `${accent}20`, background: `${accent}08` }}>
+      <span className="font-display font-semibold text-base leading-none" style={{ color: accent }}>{value}</span>
+      <span className="text-[9px] font-mono uppercase tracking-widest mt-0.5" style={{ color: "rgba(143,167,155,0.75)" }}>{label}</span>
+    </div>
+  );
+}
+
 /* ─────────────────────────────────────────────
-   MILESTONE CARD
+   MILESTONE CARD — same interaction model, forest-glass surface
 ───────────────────────────────────────────── */
 function MilestoneCard({ milestone, accent, delay, isMobile }) {
   const ref = useRef(null);
@@ -347,111 +472,116 @@ function MilestoneCard({ milestone, accent, delay, isMobile }) {
       onClick={() => setOpen(true)}
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateY(0) scale(1)" : "translateY(20px) scale(0.97)",
-        transition: `opacity 0.55s ease ${delay}s, transform 0.55s cubic-bezier(0.34,1.4,0.64,1) ${delay}s`,
+        transform: visible ? "translateY(0) scale(1)" : "translateY(24px) scale(0.96)",
+        transition: `opacity 0.6s ease ${delay}s, transform 0.6s cubic-bezier(0.34,1.35,0.64,1) ${delay}s`,
         cursor: "pointer",
       }}
     >
       <div
-        className="relative rounded-xl border overflow-hidden"
+        className="relative rounded-2xl border overflow-hidden group"
         style={{
-          background: hovered ? "rgba(15,23,42,0.98)" : "rgba(15,23,42,0.8)",
-          borderColor: hovered ? `${accent}55` : "rgba(148,163,184,0.1)",
-          backdropFilter: "blur(16px)",
+          background: hovered
+            ? `linear-gradient(145deg, rgba(9,20,15,0.98), rgba(6,14,10,0.98))`
+            : "rgba(7,16,12,0.72)",
+          borderColor: hovered ? `${accent}50` : "rgba(143,167,155,0.10)",
+          backdropFilter: "blur(20px)",
           boxShadow: hovered
-            ? `0 16px 48px -8px ${accent}22, 0 0 0 1px ${accent}18, inset 0 1px 0 rgba(255,255,255,0.05)`
-            : "0 2px 16px -2px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.02)",
-          transform: hovered && !isMobile ? "translateY(-3px)" : "translateY(0)",
-          transition: "all 0.3s cubic-bezier(0.34,1.2,0.64,1)",
+            ? `0 24px 64px -12px ${accent}28, 0 0 0 1px ${accent}20, inset 0 1px 0 rgba(255,255,255,0.05)`
+            : "0 4px 20px -4px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.02)",
+          transform: hovered && !isMobile ? "translateY(-4px)" : "translateY(0)",
+          transition: "all 0.35s cubic-bezier(0.34,1.2,0.64,1)",
         }}
       >
-        {/* Top accent line */}
-        <div
-          className="h-px w-full"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${accent}, transparent)`,
-            opacity: hovered ? 1 : 0.35,
-            transition: "opacity 0.3s",
-          }}
-        />
+        <div className="h-[2px] w-full" style={{
+          background: `linear-gradient(90deg, transparent, ${accent}80, transparent)`,
+          opacity: hovered ? 1 : 0.3,
+          transition: "opacity 0.35s",
+        }} />
 
-        {/* Shimmer */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: `radial-gradient(ellipse at 50% 0%, ${accent}06 0%, transparent 55%)`,
-            opacity: hovered ? 1 : 0,
-            transition: "opacity 0.4s",
-          }}
-        />
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: `radial-gradient(ellipse at 50% -10%, ${accent}08 0%, transparent 60%)`,
+          opacity: hovered ? 1 : 0,
+          transition: "opacity 0.4s",
+        }} />
+
+        <div className="absolute bottom-0 right-0 w-24 h-24 pointer-events-none" style={{
+          background: `radial-gradient(circle at 100% 100%, ${accent}07 0%, transparent 70%)`,
+          opacity: hovered ? 1 : 0,
+          transition: "opacity 0.4s",
+        }} />
 
         <div className={isMobile ? "relative p-4" : "relative p-5"}>
-          {/* Category + Badge */}
-          <div className="flex flex-wrap items-center gap-2 mb-2.5">
-            <span
-              className="text-xs font-mono uppercase tracking-widest px-2 py-0.5 rounded"
-              style={{ color: accent, background: `${accent}15` }}
-            >
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <span className="text-[10px] font-mono uppercase tracking-[0.12em] px-2.5 py-0.5 rounded-full border"
+              style={{ color: accent, background: `${accent}12`, borderColor: `${accent}25` }}>
               {milestone.category}
             </span>
-            <Badge label={milestone.badge} color={milestone.badgeColor} />
+            <Badge label={milestone.badge} color={milestone.badgeColor || AMBER} />
           </div>
 
-          {/* Title */}
-          <h4
-            className={`font-bold mb-1.5 leading-snug font-display ${isMobile ? "text-[15px]" : "text-base"}`}
-            style={{ color: hovered ? accent : "#f1f5f9", transition: "color 0.3s" }}
-          >
+          <h4 className={`font-display font-semibold leading-tight mb-2 ${isMobile ? "text-[15px]" : "text-[16px]"}`}
+            style={{
+              color: hovered ? INK : "#dce6df",
+              letterSpacing: "-0.01em",
+              transition: "color 0.3s",
+            }}>
             {milestone.title}
           </h4>
 
-          {/* Description */}
-          <p className={`text-slate-400 leading-relaxed mb-3 ${isMobile ? "text-[13px]" : "text-sm"}`}>
+          <p className={`leading-relaxed mb-4 ${isMobile ? "text-[12.5px]" : "text-[13px]"}`}
+            style={{ color: MUTED, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {milestone.description}
           </p>
 
-          {/* Tags */}
-          <div className="flex flex-wrap gap-1.5">
-            {milestone.tags.map((t) => <Tag key={t} label={t} accent={accent} />)}
+          {milestone.stats?.length > 0 && (
+            <div className="flex gap-2 mb-4">
+              {milestone.stats.map((s, i) => (
+                <StatChip key={i} value={s.value} label={s.label} accent={accent} />
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {milestone.tags.slice(0, isMobile ? 4 : 6).map((t) => <Tag key={t} label={t} accent={accent} />)}
+            {milestone.tags.length > (isMobile ? 4 : 6) && (
+              <span className="text-[11px] font-mono" style={{ color: "rgba(143,167,155,0.55)", alignSelf: "center" }}>
+                +{milestone.tags.length - (isMobile ? 4 : 6)}
+              </span>
+            )}
           </div>
 
-          {/* Media strip */}
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
-            {images.length > 0 ? (
-              images.map((src, idx) => (
-                <button
-                  key={src + idx}
-                  onClick={(e) => { e.stopPropagation(); setOpen(true); }}
-                  className="relative shrink-0 rounded-lg overflow-hidden border"
-                  style={{
-                    width: isMobile ? 120 : 132,
-                    height: isMobile ? 76 : 84,
-                    borderColor: `${accent}35`,
-                    background: "rgba(15,23,42,0.7)",
-                  }}
-                >
-                  <img src={src} alt={`${milestone.title} preview ${idx + 1}`} className="w-full h-full object-cover" />
-                </button>
-              ))
-            ) : (
-              <button
-                onClick={(e) => { e.stopPropagation(); setOpen(true); }}
-                className="relative shrink-0 rounded-lg overflow-hidden border flex items-center justify-center text-[11px] font-mono"
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+            {images.length > 0 ? images.map((src, idx) => (
+              <button key={idx} onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+                className="relative shrink-0 rounded-xl overflow-hidden border transition-all duration-200 hover:scale-105"
+                style={{ width: isMobile ? 110 : 126, height: isMobile ? 70 : 80, borderColor: `${accent}30` }}>
+                <img src={src} alt="" className="w-full h-full object-cover" />
+                <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${accent}18, transparent)` }} />
+              </button>
+            )) : (
+              <button onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+                className="relative shrink-0 rounded-xl border overflow-hidden flex flex-col items-center justify-center gap-1 transition-all duration-200 hover:scale-105 group/glyph"
                 style={{
-                  width: isMobile ? 120 : 132,
-                  height: isMobile ? 76 : 84,
-                  borderColor: `${accent}30`,
-                  background: `linear-gradient(135deg, ${accent}18, rgba(15,23,42,0.9))`,
-                  color: "#cbd5e1",
-                }}
-              >
-                Open details
+                  width: isMobile ? 110 : 126, height: isMobile ? 70 : 80,
+                  borderColor: `${accent}28`,
+                  background: `linear-gradient(150deg, ${accent}16, rgba(7,16,12,0.9))`,
+                }}>
+                <div className="absolute inset-0" style={{ backgroundImage: `radial-gradient(${accent}22 1px, transparent 1px)`, backgroundSize: "10px 10px", opacity: 0.5 }} />
+                <div className="relative transition-transform duration-300 group-hover/glyph:scale-110">
+                  <GrowthGlyph accent={accent} size={isMobile ? 26 : 30} />
+                </div>
+                <span className="relative text-[9px] font-mono uppercase tracking-wider" style={{ color: accent }}>
+                  View story
+                </span>
               </button>
             )}
           </div>
 
-          <div className="mt-2 text-[11px] font-mono text-slate-600">
-            Tap to open full story
+          <div className="mt-3 flex items-center gap-1.5">
+            <div className="w-1 h-1 rounded-full" style={{ background: accent, animation: "badge-pulse 2s infinite" }} />
+            <span className="text-[10px] font-mono" style={{ color: "rgba(143,167,155,0.45)" }}>
+              {isMobile ? "Tap" : "Click"} to explore full story
+            </span>
           </div>
         </div>
       </div>
@@ -462,8 +592,8 @@ function MilestoneCard({ milestone, accent, delay, isMobile }) {
     <>
       {open && <JourneyModal milestone={milestone} accent={accent} onClose={() => setOpen(false)} />}
       {isMobile ? cardContent : (
-        <Tilt glareEnable glareMaxOpacity={0.2} glareColor={accent} glarePosition="all"
-          tiltMaxAngleX={8} tiltMaxAngleY={8} transitionSpeed={1200} scale={1.015} className="w-full">
+        <Tilt glareEnable glareMaxOpacity={0.15} glareColor={accent} glarePosition="all"
+          tiltMaxAngleX={6} tiltMaxAngleY={6} transitionSpeed={1400} scale={1.012} className="w-full">
           {cardContent}
         </Tilt>
       )}
@@ -472,85 +602,125 @@ function MilestoneCard({ milestone, accent, delay, isMobile }) {
 }
 
 /* ─────────────────────────────────────────────
+   TIMELINE NODE — signature element.
+   A growth ring (dendrochronology) fused with a circuit via:
+   concentric dashed rings read as tree-ring dating, the
+   diamond core reads as a PCB component, and four radiating
+   ticks read as trace legs. One motif, two readings.
+───────────────────────────────────────────── */
+function TimelineNode({ accent, active, index }) {
+  const ticks = [0, 90, 180, 270];
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: 52, height: 52 }}>
+      <svg width="52" height="52" viewBox="-26 -26 52 52" className="absolute inset-0 overflow-visible">
+        {/* Outer growth ring */}
+        <circle r="17" fill="none"
+          stroke={active ? accent : "rgba(143,167,155,0.14)"}
+          strokeWidth="0.8"
+          strokeDasharray="2.5 3.5"
+          style={{ transition: "stroke 0.6s ease", opacity: active ? 0.6 : 1 }} />
+        {/* Inner growth ring */}
+        <circle r="11" fill="none"
+          stroke={active ? accent : "rgba(143,167,155,0.10)"}
+          strokeWidth="0.8"
+          style={{ transition: "stroke 0.5s ease", opacity: active ? 0.85 : 1 }} />
+        {/* Circuit trace legs */}
+        {ticks.map((deg) => {
+          const rad = (deg * Math.PI) / 180;
+          const x1 = Math.cos(rad) * 17, y1 = Math.sin(rad) * 17;
+          const x2 = Math.cos(rad) * 23, y2 = Math.sin(rad) * 23;
+          return (
+            <line key={deg} x1={x1} y1={y1} x2={x2} y2={y2}
+              stroke={active ? accent : "rgba(143,167,155,0.12)"}
+              strokeWidth="1"
+              style={{ transition: "stroke 0.5s ease" }} />
+          );
+        })}
+      </svg>
+
+      {/* Diamond "chip" core */}
+      <div className="relative z-10 flex items-center justify-center transition-all duration-500"
+        style={{
+          width: active ? 15 : 11,
+          height: active ? 15 : 11,
+          transform: "rotate(45deg)",
+          borderRadius: 3,
+          background: active ? `linear-gradient(135deg, ${accent}70, ${accent}20)` : "rgba(5,15,10,0.9)",
+          border: `1.5px solid ${active ? accent : "rgba(143,167,155,0.25)"}`,
+          boxShadow: active ? `0 0 18px ${accent}55, 0 0 36px ${accent}22` : "none",
+        }}>
+        <div className="rounded-[1px] transition-all duration-400"
+          style={{
+            width: active ? 4 : 2.5,
+            height: active ? 4 : 2.5,
+            background: active ? INK : "rgba(143,167,155,0.4)",
+          }} />
+      </div>
+
+      {active && (
+        <div className="absolute inset-0 rounded-full animate-ping"
+          style={{ border: `1.5px solid ${accent}`, opacity: 0.18, animationDuration: "2.4s" }} />
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
    YEAR BLOCK — MOBILE
-   Slim left rail: 2px line + 8px dot, full-width cards
 ───────────────────────────────────────────── */
 function YearBlockMobile({ item, index, lineProgress }) {
   const ref = useRef(null);
   const visible = useIntersection(ref);
   const nodePosition = index / Math.max(timelineData.length, 1);
   const nodeActive = lineProgress >= nodePosition;
+  const accent = item.accent || MOSS;
 
   return (
-    <div ref={ref} className="relative pl-8 mb-8">
-      {/* Slim left rail dot */}
-      <div
-        className="absolute left-0 top-1 flex flex-col items-center"
-        style={{ width: 20 }}
-      >
-        {/* Node dot — NO ping ring on mobile */}
-        <div
-          className="rounded-full transition-all duration-500"
+    <div ref={ref} className="relative pl-9 mb-10">
+      <div className="absolute left-0 top-0.5 flex flex-col items-center" style={{ width: 22 }}>
+        <div className="rounded-full transition-all duration-500"
           style={{
-            width: nodeActive ? 12 : 9,
-            height: nodeActive ? 12 : 9,
-            background: nodeActive ? item.accent : "rgba(148,163,184,0.3)",
-            boxShadow: nodeActive ? `0 0 10px ${item.accent}80, 0 0 20px ${item.accent}30` : "none",
-            border: `2px solid ${nodeActive ? item.accent : "rgba(148,163,184,0.15)"}`,
+            width: nodeActive ? 14 : 10,
+            height: nodeActive ? 14 : 10,
+            background: nodeActive ? accent : "rgba(143,167,155,0.22)",
+            boxShadow: nodeActive ? `0 0 12px ${accent}80, 0 0 24px ${accent}30` : "none",
+            border: `2px solid ${nodeActive ? accent : "rgba(143,167,155,0.14)"}`,
             marginLeft: 4,
             flexShrink: 0,
-          }}
-        />
+            transition: "all 0.5s ease",
+          }} />
       </div>
 
-      {/* Year + era header */}
-      <div
-        style={{
-          opacity: visible ? 1 : 0,
-          transform: visible ? "translateX(0)" : "translateX(-16px)",
-          transition: "opacity 0.6s ease 0.05s, transform 0.6s cubic-bezier(0.22,1,0.36,1) 0.05s",
-        }}
-      >
-        {/* Compact year row */}
-        <div className="flex items-baseline gap-2.5 mb-1">
-          <span
-            className="font-black font-display leading-none"
+      <div style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateX(0)" : "translateX(-18px)",
+        transition: "opacity 0.6s ease 0.05s, transform 0.6s cubic-bezier(0.22,1,0.36,1) 0.05s",
+      }}>
+        <div className="flex items-baseline gap-3 mb-1">
+          <span className="font-display italic font-semibold leading-none"
             style={{
-              fontSize: "clamp(2rem, 10vw, 2.8rem)",
-              background: `linear-gradient(135deg, ${item.accent}, ${item.accent}70)`,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-              filter: nodeActive ? `drop-shadow(0 0 10px ${item.accent}50)` : "none",
+              fontSize: "clamp(2.2rem, 11vw, 3rem)",
+              background: `linear-gradient(135deg, ${accent} 20%, ${accent}60 100%)`,
+              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
+              filter: nodeActive ? `drop-shadow(0 0 12px ${accent}50)` : "none",
               transition: "filter 0.5s ease",
-            }}
-          >
+            }}>
             {item.year}
           </span>
           <div>
-            <div className="text-[15px] font-bold text-white font-display leading-tight">
-              <span className="mr-1">{item.icon}</span>{item.era}
+            <div className="text-[15px] font-semibold font-display leading-tight" style={{ color: INK }}>
+              <span className="mr-1.5">{item.icon}</span>{item.era}
             </div>
-            <div
-              className="text-[10px] font-mono tracking-widest uppercase"
-              style={{ color: item.accent, opacity: 0.8 }}
-            >
+            <div className="text-[9px] font-mono tracking-[0.15em] uppercase mt-0.5" style={{ color: accent, opacity: 0.8 }}>
               {item.milestones.length} milestone{item.milestones.length > 1 ? "s" : ""}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Cards — full width, no tilt on mobile */}
-      <div className="space-y-2.5 mt-3">
+      <div className="space-y-3 mt-3">
         {item.milestones.map((m, i) => (
-          <MilestoneCard
-            key={i}
-            milestone={m}
-            accent={item.accent}
-            delay={i * 0.08}
-            isMobile={true}
-          />
+          <MilestoneCard key={i} milestone={m} accent={m.accent || accent} delay={i * 0.07} isMobile />
         ))}
       </div>
     </div>
@@ -558,7 +728,7 @@ function YearBlockMobile({ item, index, lineProgress }) {
 }
 
 /* ─────────────────────────────────────────────
-   YEAR BLOCK — DESKTOP (original alternating layout)
+   YEAR BLOCK — DESKTOP
 ───────────────────────────────────────────── */
 function YearBlockDesktop({ item, index, lineProgress }) {
   const ref = useRef(null);
@@ -566,85 +736,51 @@ function YearBlockDesktop({ item, index, lineProgress }) {
   const isLeft = item.side === "left";
   const nodePosition = index / Math.max(timelineData.length, 1);
   const nodeActive = lineProgress >= nodePosition;
+  const accent = item.accent || MOSS;
 
   return (
-    <div
-      ref={ref}
-      className="relative flex items-start gap-6"
-      style={{ flexDirection: isLeft ? "row-reverse" : "row", marginBottom: "3.5rem" }}
-    >
-      {/* Content */}
-      <div
-        className="flex-1 min-w-0"
-        style={{
-          opacity: visible ? 1 : 0,
-          transform: visible ? "translateX(0)" : isLeft ? "translateX(40px)" : "translateX(-40px)",
-          transition: "opacity 0.7s ease 0.1s, transform 0.7s cubic-bezier(0.22,1,0.36,1) 0.1s",
-          paddingLeft: isLeft ? 0 : "1rem",
-          paddingRight: isLeft ? "1rem" : 0,
-        }}
-      >
-        <div className="flex items-center gap-3 mb-5"
-          style={{ flexDirection: isLeft ? "row-reverse" : "row" }}>
-          <div
-            className="text-5xl md:text-6xl font-black font-display leading-none select-none"
+    <div ref={ref} className="relative flex items-start gap-0" style={{
+      flexDirection: isLeft ? "row-reverse" : "row",
+      marginBottom: "4rem",
+    }}>
+      <div className="flex-1 min-w-0" style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateX(0)" : isLeft ? "translateX(36px)" : "translateX(-36px)",
+        transition: "opacity 0.7s ease 0.1s, transform 0.7s cubic-bezier(0.22,1,0.36,1) 0.1s",
+        paddingLeft: isLeft ? 0 : "2rem",
+        paddingRight: isLeft ? "2rem" : 0,
+      }}>
+        <div className="flex items-center gap-4 mb-5" style={{ flexDirection: isLeft ? "row-reverse" : "row" }}>
+          <div className="font-display italic font-semibold leading-none select-none"
             style={{
-              background: `linear-gradient(135deg, ${item.accent}, ${item.accent}80)`,
+              fontSize: "clamp(3rem, 5vw, 4.5rem)",
+              background: `linear-gradient(135deg, ${accent} 10%, ${accent}65 100%)`,
               WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-              filter: nodeActive ? `drop-shadow(0 0 12px ${item.accent}60)` : "none",
+              filter: nodeActive ? `drop-shadow(0 0 16px ${accent}55)` : "none",
               transition: "filter 0.6s ease",
-            }}
-          >
+            }}>
             {item.year}
           </div>
           <div style={{ textAlign: isLeft ? "right" : "left" }}>
-            <div className="text-xl font-bold text-white font-display leading-tight">
+            <div className="text-xl font-semibold font-display leading-tight" style={{ color: INK }}>
               <span className="mr-2">{item.icon}</span>{item.era}
             </div>
-            <div className="text-xs font-mono tracking-widest uppercase mt-0.5" style={{ color: item.accent }}>
+            <div className="text-[10px] font-mono tracking-[0.12em] uppercase mt-1" style={{ color: accent, opacity: 0.85 }}>
               {item.milestones.length} milestone{item.milestones.length > 1 ? "s" : ""}
             </div>
           </div>
         </div>
-        <div className="space-y-3">
+
+        <div className="space-y-3.5">
           {item.milestones.map((m, i) => (
-            <MilestoneCard key={i} milestone={m} accent={item.accent}
-              delay={index * 0.12 + i * 0.1} isMobile={false} />
+            <MilestoneCard key={i} milestone={m} accent={m.accent || accent}
+              delay={index * 0.1 + i * 0.09} isMobile={false} />
           ))}
         </div>
       </div>
 
-      {/* Center node */}
-      <div className="flex flex-col items-center relative" style={{ width: 48, flexShrink: 0 }}>
-        <div
-          className="relative z-10 flex items-center justify-center rounded-full transition-all duration-700"
-          style={{
-            width: nodeActive ? 44 : 36,
-            height: nodeActive ? 44 : 36,
-            background: nodeActive
-              ? `radial-gradient(circle, ${item.accent}50 0%, ${item.accent}20 60%, transparent 100%)`
-              : "rgba(15,23,42,0.8)",
-            border: `2px solid ${nodeActive ? item.accent : "rgba(148,163,184,0.2)"}`,
-            boxShadow: nodeActive
-              ? `0 0 20px ${item.accent}60, 0 0 40px ${item.accent}30, inset 0 0 12px ${item.accent}20`
-              : "none",
-          }}
-        >
-          <div
-            className="rounded-full transition-all duration-500"
-            style={{
-              width: nodeActive ? 12 : 8, height: nodeActive ? 12 : 8,
-              background: nodeActive ? item.accent : "rgba(148,163,184,0.4)",
-              boxShadow: nodeActive ? `0 0 8px ${item.accent}` : "none",
-            }}
-          />
-          {nodeActive && (
-            <div
-              className="absolute inset-0 rounded-full animate-ping"
-              style={{ border: `1.5px solid ${item.accent}`, opacity: 0.3, animationDuration: "2s" }}
-            />
-          )}
-        </div>
+      <div className="flex flex-col items-center" style={{ width: 52, flexShrink: 0 }}>
+        <TimelineNode accent={accent} active={nodeActive} index={index} />
       </div>
 
       <div className="flex-1 hidden md:block" />
@@ -660,41 +796,64 @@ export default function GrowthTimeline() {
   const lineRef = useRef(null);
   const lineProgress = useScrollProgress(containerRef);
   const isMobile = useIsMobile();
-
   const lineHeightPct = `${Math.min(lineProgress * 100, 100)}%`;
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800;900&family=JetBrains+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap');
-        .font-display { font-family: 'Syne', sans-serif; }
-        .font-mono    { font-family: 'JetBrains Mono', monospace; }
-        * { font-family: 'Outfit', sans-serif; box-sizing: border-box; }
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Space+Grotesk:wght@400;500;700&family=Outfit:wght@300;400;500;600&display=swap');
+        .font-display { font-family: 'Fraunces', serif; }
+        .font-mono    { font-family: 'Space Grotesk', monospace; }
+        *             { font-family: 'Outfit', sans-serif; box-sizing: border-box; }
 
         @keyframes badge-pulse {
-          0%, 100% { opacity: 1; }
-          50%       { opacity: 0.7; }
+          0%, 100% { opacity: 1; box-shadow: 0 0 0px transparent; }
+          50%       { opacity: 0.72; }
         }
         @keyframes line-glow {
-          0%, 100% { filter: blur(2px) brightness(1); }
-          50%       { filter: blur(3px) brightness(1.4); }
+          0%, 100% { filter: blur(1.5px) brightness(1); }
+          50%       { filter: blur(3px) brightness(1.5); }
         }
         @keyframes float-slow {
-          0%, 100% { transform: translateY(0px); }
-          50%       { transform: translateY(-8px); }
+          0%, 100% { transform: translateY(0px) scale(1); }
+          50%       { transform: translateY(-14px) scale(1.04); }
         }
+        @keyframes sap-flow {
+          0%   { transform: translateY(-12px); opacity: 0; }
+          10%  { opacity: 1; }
+          90%  { opacity: 1; }
+          100% { transform: translateY(12px); opacity: 0; }
+        }
+
         .timeline-section { position: relative; overflow: hidden; }
-        .timeline-section::-webkit-scrollbar { display: none; }
+        .scrollbar-none { scrollbar-width: none; }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .tl-line-glow { animation: line-glow 3.5s ease-in-out infinite; }
       `}</style>
 
       <section id="journey" className="timeline-section parallax-bg section-y page-x min-h-screen">
         <Particles />
+        <CursorGlow />
 
-        {/* Ambient blobs */}
-        <div className="absolute top-1/4 left-0 w-80 h-80 rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)", filter: "blur(40px)", animation: "float-slow 8s ease-in-out infinite" }} />
-        <div className="absolute bottom-1/3 right-0 w-64 h-64 rounded-full pointer-events-none"
-          style={{ background: "radial-gradient(circle, rgba(6,182,212,0.07) 0%, transparent 70%)", filter: "blur(40px)", animation: "float-slow 10s ease-in-out infinite 2s" }} />
+        {/* Ambient canopy-light blobs — moss / teal / amber, matching Journey.jsx */}
+        <div className="absolute top-1/5 left-0 w-96 h-96 rounded-full pointer-events-none"
+          style={{
+            background: `radial-gradient(circle, ${MOSS}18 0%, transparent 70%)`,
+            filter: "blur(48px)",
+            animation: "float-slow 9s ease-in-out infinite",
+          }} />
+        <div className="absolute bottom-1/3 right-0 w-80 h-80 rounded-full pointer-events-none"
+          style={{
+            background: `radial-gradient(circle, ${TEAL}14 0%, transparent 70%)`,
+            filter: "blur(48px)",
+            animation: "float-slow 12s ease-in-out infinite 2.5s",
+          }} />
+        <div className="absolute top-2/3 left-1/3 w-64 h-64 rounded-full pointer-events-none"
+          style={{
+            background: `radial-gradient(circle, ${AMBER}10 0%, transparent 70%)`,
+            filter: "blur(40px)",
+            animation: "float-slow 14s ease-in-out infinite 5s",
+          }} />
 
         <div className="relative z-10 container-5xl" ref={containerRef}>
           <SectionHeader
@@ -703,8 +862,8 @@ export default function GrowthTimeline() {
             title={
               <>
                 Growth
-                <span className="block" style={{
-                  background: "linear-gradient(135deg, #06b6d4 0%, #8b5cf6 60%, #ec4899 100%)",
+                <span className="block italic" style={{
+                  background: HERO_GRADIENT,
                   WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
                 }}>
                   Timeline
@@ -714,30 +873,26 @@ export default function GrowthTimeline() {
             subtitle="Six years of building, competing, and shipping — from an Arduino in Sarawak to blockchain on Ethereum mainnet."
           />
 
-          {/* ── Timeline Body ── */}
           <div className="relative">
             {isMobile ? (
-              /* ── MOBILE: slim left-rail layout ── */
               <div className="relative">
-                {/* Left vertical track */}
-                <div
-                  className="absolute top-0 bottom-0 pointer-events-none"
-                  style={{ left: 9, width: 2, background: "rgba(148,163,184,0.07)" }}
-                >
-                  <div
-                    ref={lineRef}
-                    style={{
-                      position: "absolute", top: 0, left: 0, right: 0,
-                      height: lineHeightPct,
-                      background: "linear-gradient(180deg, #6366f1 0%, #06b6d4 40%, #8b5cf6 70%, #ec4899 100%)",
-                      borderRadius: 2,
-                      transition: "height 0.1s linear",
-                      boxShadow: "0 0 6px rgba(6,182,212,0.4), 0 0 12px rgba(99,102,241,0.25)",
-                      animation: "line-glow 3s ease-in-out infinite",
-                    }}
-                  />
+                <div className="absolute top-0 bottom-0 pointer-events-none" style={{ left: 9, width: 2, background: RAIL_TRACK }}>
+                  <div ref={lineRef} className="tl-line-glow" style={{
+                    position: "absolute", top: 0, left: 0, right: 0,
+                    height: lineHeightPct,
+                    background: RAIL_GRADIENT,
+                    borderRadius: 2,
+                    transition: "height 0.1s linear",
+                    boxShadow: `0 0 8px ${MOSS}55, 0 0 16px ${TEAL}30`,
+                  }}>
+                    {/* Sap droplet traveling along the rail — organic pulse on a technical line */}
+                    <div style={{
+                      position: "absolute", bottom: 0, left: -1.5, width: 5, height: 5,
+                      borderRadius: "50%", background: AMBER, boxShadow: `0 0 8px ${AMBER}`,
+                      animation: "sap-flow 2.6s ease-in-out infinite",
+                    }} />
+                  </div>
                 </div>
-
                 <div className="pt-1">
                   {timelineData.map((item, i) => (
                     <YearBlockMobile key={item.year} item={item} index={i} lineProgress={lineProgress} />
@@ -745,24 +900,23 @@ export default function GrowthTimeline() {
                 </div>
               </div>
             ) : (
-              /* ── DESKTOP: original alternating layout ── */
               <div className="relative">
-                <div
-                  className="absolute top-0 bottom-0 pointer-events-none"
-                  style={{ left: "50%", transform: "translateX(-50%)", width: 2, background: "rgba(148,163,184,0.08)" }}
-                >
-                  <div
-                    ref={lineRef}
-                    style={{
-                      position: "absolute", top: 0, left: 0, right: 0,
-                      height: lineHeightPct,
-                      background: "linear-gradient(180deg, #6366f1 0%, #06b6d4 40%, #8b5cf6 70%, #ec4899 100%)",
-                      borderRadius: 2,
-                      transition: "height 0.1s linear",
-                      boxShadow: "0 0 8px rgba(6,182,212,0.5), 0 0 16px rgba(99,102,241,0.3)",
-                      animation: "line-glow 3s ease-in-out infinite",
-                    }}
-                  />
+                <div className="absolute top-0 bottom-0 pointer-events-none"
+                  style={{ left: "50%", transform: "translateX(-50%)", width: 2, background: RAIL_TRACK }}>
+                  <div ref={lineRef} className="tl-line-glow" style={{
+                    position: "absolute", top: 0, left: 0, right: 0,
+                    height: lineHeightPct,
+                    background: RAIL_GRADIENT,
+                    borderRadius: 2,
+                    transition: "height 0.1s linear",
+                    boxShadow: `0 0 10px ${MOSS}60, 0 0 20px ${TEAL}30`,
+                  }}>
+                    <div style={{
+                      position: "absolute", bottom: 0, left: -1.5, width: 5, height: 5,
+                      borderRadius: "50%", background: AMBER, boxShadow: `0 0 8px ${AMBER}`,
+                      animation: "sap-flow 2.6s ease-in-out infinite",
+                    }} />
+                  </div>
                 </div>
                 <div>
                   {timelineData.map((item, i) => (
@@ -774,33 +928,51 @@ export default function GrowthTimeline() {
           </div>
 
           {/* Footer card */}
-          <div
-            className="mt-12 md:mt-16 rounded-3xl border p-6 md:p-8 text-center relative overflow-hidden"
+          <div className="mt-14 md:mt-20 rounded-3xl border overflow-hidden relative"
             style={{
-              background: "rgba(15,23,42,0.8)",
-              borderColor: "rgba(6,182,212,0.2)",
-              backdropFilter: "blur(20px)",
-              boxShadow: "0 0 60px -20px rgba(6,182,212,0.15)",
-            }}
-          >
-            <div className="absolute inset-0 pointer-events-none"
-              style={{ background: "radial-gradient(ellipse at 50% 0%, rgba(6,182,212,0.05) 0%, transparent 60%)" }} />
-            <div className="relative">
-              <div className="text-3xl mb-3">✦</div>
-              <h3 className="font-display text-2xl font-bold text-white mb-3" style={{ letterSpacing: "-0.01em" }}>
-                The Journey Continues
-              </h3>
-              <p className="text-slate-400 text-sm leading-relaxed max-w-lg mx-auto mb-5">
-                Currently exploring the intersection of AI, blockchain, and scalable systems —
-                always learning, always shipping.
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                {["🚀 Full-Stack", "⛓ Web3", "🤖 AI/ML", "🏆 Hackathons", "📐 System Design"].map((b) => (
-                  <span key={b} className="px-3 py-1.5 rounded-full text-xs font-medium border"
-                    style={{ color: "#06b6d4", borderColor: "rgba(6,182,212,0.3)", background: "rgba(6,182,212,0.08)" }}>
-                    {b}
-                  </span>
-                ))}
+              background: "linear-gradient(145deg, rgba(7,16,12,0.92), rgba(5,11,9,0.96))",
+              borderColor: `${MOSS}2e`,
+              backdropFilter: "blur(24px)",
+              boxShadow: `0 0 80px -24px ${MOSS}30, inset 0 1px 0 rgba(255,255,255,0.04)`,
+            }}>
+            <div style={{ height: 2, background: `linear-gradient(90deg, transparent, ${MOSS} 30%, ${TEAL} 70%, transparent)` }} />
+
+            <div className="p-7 md:p-10 text-center relative">
+              <div className="absolute inset-0 pointer-events-none"
+                style={{ background: `radial-gradient(ellipse at 50% 0%, ${MOSS}10 0%, transparent 55%)` }} />
+
+              <div className="relative">
+                <div className="text-4xl mb-4" style={{ animation: "float-slow 6s ease-in-out infinite" }}>✦</div>
+                <h3 className="font-display italic text-2xl md:text-3xl font-semibold mb-3"
+                  style={{ color: INK, letterSpacing: "-0.01em" }}>
+                  The Journey Continues
+                </h3>
+                <p className="text-sm leading-relaxed max-w-md mx-auto mb-7" style={{ color: MUTED }}>
+                  Currently exploring the intersection of AI, blockchain, and scalable systems —
+                  always learning, always shipping.
+                </p>
+                <div className="flex flex-wrap justify-center gap-2.5">
+                  {[
+                    { icon: "🚀", label: "Full-Stack" },
+                    { icon: "⛓", label: "Web3" },
+                    { icon: "🤖", label: "AI/ML" },
+                    { icon: "🏆", label: "Hackathons" },
+                    { icon: "📐", label: "System Design" },
+                  ].map(({ icon, label }) => (
+                    <span key={label}
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold border transition-all duration-300 hover:scale-105 hover:-translate-y-0.5"
+                      style={{
+                        color: MOSS,
+                        borderColor: `${MOSS}30`,
+                        background: `${MOSS}0c`,
+                        boxShadow: `0 0 12px ${MOSS}10`,
+                        cursor: "default",
+                      }}>
+                      <span>{icon}</span>
+                      <span>{label}</span>
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
