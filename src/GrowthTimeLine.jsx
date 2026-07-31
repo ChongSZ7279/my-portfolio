@@ -18,7 +18,6 @@ const MUTED_DARK = "#4a5f54";
 const BG_DEEP = "#050f0a";
 const RAIL_TRACK = "rgba(143,167,155,0.10)";
 
-const RAIL_GRADIENT = `linear-gradient(180deg, ${MOSS} 0%, ${TEAL} 45%, ${AMBER} 100%)`;
 const HERO_GRADIENT = `linear-gradient(135deg, ${MOSS} 0%, ${TEAL} 55%, ${AMBER} 100%)`;
 
 /* ─────────────────────────────────────────────
@@ -199,32 +198,10 @@ function Badge({ label, color = AMBER }) {
 }
 
 /* ─────────────────────────────────────────────
-   GROWTH GLYPH — a small standalone mark built from the same
-   rings + radiating legs + diamond core as the timeline nodes.
-   Used to dress up any spot with no photo, so "no image" still
-   looks designed rather than like a missing asset.
-───────────────────────────────────────────── */
-function GrowthGlyph({ accent, size = 56 }) {
-  const legs = [0, 60, 120, 180, 240, 300];
-  return (
-    <svg width={size} height={size} viewBox="-30 -30 60 60" style={{ overflow: "visible" }}>
-      <circle r="21" fill="none" stroke={`${accent}45`} strokeWidth="0.7" strokeDasharray="2.5 4" />
-      <circle r="14" fill="none" stroke={`${accent}30`} strokeWidth="0.7" />
-      {legs.map((deg) => {
-        const rad = (deg * Math.PI) / 180;
-        const x1 = Math.cos(rad) * 14, y1 = Math.sin(rad) * 14;
-        const x2 = Math.cos(rad) * 27, y2 = Math.sin(rad) * 27;
-        return <line key={deg} x1={x1} y1={y1} x2={x2} y2={y2} stroke={`${accent}30`} strokeWidth="1" />;
-      })}
-      <g transform="rotate(45)">
-        <rect x="-7" y="-7" width="14" height="14" rx="3" fill={`${accent}18`} stroke={accent} strokeWidth="1.4" />
-      </g>
-    </svg>
-  );
-}
-
-/* ─────────────────────────────────────────────
-   IMAGE CAROUSEL — unchanged mechanics, recolored chrome
+   IMAGE CAROUSEL — unchanged mechanics, recolored chrome.
+   Only ever rendered when images.length > 0 (JourneyModal
+   switches to a text-only layout otherwise), so no placeholder
+   branch is needed here.
 ───────────────────────────────────────────── */
 function ImageCarousel({ images, accent, title, embedded = false }) {
   const [idx, setIdx] = useState(0);
@@ -236,19 +213,7 @@ function ImageCarousel({ images, accent, title, embedded = false }) {
     setTimeout(() => { setIdx(i); setFading(false); }, 220);
   }, [idx]);
 
-  if (images.length === 0) return (
-    <div className="relative w-full h-full flex flex-col items-center justify-center gap-4 overflow-hidden">
-      <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse at 50% 42%, ${accent}14 0%, transparent 65%)` }} />
-      <div className="absolute inset-0" style={{ backgroundImage: `radial-gradient(${accent}18 1px, transparent 1px)`, backgroundSize: "22px 22px", opacity: 0.35, maskImage: "radial-gradient(ellipse at 50% 45%, black 0%, transparent 70%)" }} />
-      <div className="relative" style={{ animation: "float-slow 7s ease-in-out infinite" }}>
-        <GrowthGlyph accent={accent} size={72} />
-      </div>
-      <div className="relative text-center px-6">
-        <p className="text-[13px] font-medium mb-1" style={{ color: "#cdd9d2" }}>No preview yet</p>
-        <p className="text-[11px] font-mono" style={{ color: MUTED }}>the story's all in the details below ↓</p>
-      </div>
-    </div>
-  );
+  if (images.length === 0) return null;
 
   return (
     <div className={`relative w-full flex flex-col ${embedded ? "h-full min-h-[280px]" : "h-full"}`}>
@@ -391,11 +356,13 @@ function JourneyModal({ milestone, accent, onClose }) {
                 )}
               </div>
 
-              <div className="grid md:grid-cols-[1.1fr_0.9fr] gap-5">
-                <div className="relative rounded-2xl overflow-hidden border"
-                  style={{ borderColor: `${accent}25`, minHeight: 280, background: "rgba(5,15,10,0.85)" }}>
-                  <ImageCarousel images={images} accent={accent} title={milestone.title} />
-                </div>
+              <div className={images.length > 0 ? "grid md:grid-cols-[1.1fr_0.9fr] gap-5" : "grid gap-5"}>
+                {images.length > 0 && (
+                  <div className="relative rounded-2xl overflow-hidden border"
+                    style={{ borderColor: `${accent}25`, minHeight: 280, background: "rgba(5,15,10,0.85)" }}>
+                    <ImageCarousel images={images} accent={accent} title={milestone.title} />
+                  </div>
+                )}
 
                 <div className="flex flex-col gap-4">
                   <div>
@@ -403,16 +370,16 @@ function JourneyModal({ milestone, accent, onClose }) {
                       style={{ color: INK, letterSpacing: "-0.01em" }}>
                       {milestone.title}
                     </h3>
-                    <p style={{ color: MUTED }} className="text-[13.5px] leading-relaxed">{milestone.description}</p>
+                    <p style={{ color: MUTED }} className={images.length > 0 ? "text-[13.5px] leading-relaxed" : "text-[15px] leading-relaxed max-w-2xl"}>{milestone.description}</p>
                   </div>
 
                   {milestone.details?.length > 0 && (
-                    <div className="rounded-xl border p-4"
+                    <div className={images.length > 0 ? "rounded-xl border p-4" : "rounded-xl border p-5 max-w-2xl"}
                       style={{ borderColor: `${accent}20`, background: `${accent}07` }}>
                       <div className="text-[10px] font-mono uppercase tracking-[0.12em] mb-3" style={{ color: accent }}>
                         ▸ Highlights
                       </div>
-                      <ul className="space-y-2">
+                      <ul className={images.length > 0 ? "space-y-2" : "space-y-2.5"}>
                         {milestone.details.map((d, i) => (
                           <li key={i} className="flex items-start gap-2.5 text-[13px] leading-snug" style={{ color: "#cdd9d2" }}>
                             <span className="mt-0.5 text-xs shrink-0" style={{ color: accent }}>◆</span>
@@ -529,7 +496,7 @@ function MilestoneCard({ milestone, accent, delay, isMobile }) {
           </h4>
 
           <p className={`leading-relaxed mb-4 ${isMobile ? "text-[12.5px]" : "text-[13px]"}`}
-            style={{ color: MUTED, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+            style={{ color: MUTED, display: "-webkit-box", WebkitLineClamp: images.length > 0 ? 3 : 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {milestone.description}
           </p>
 
@@ -550,32 +517,18 @@ function MilestoneCard({ milestone, accent, delay, isMobile }) {
             )}
           </div>
 
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-            {images.length > 0 ? images.map((src, idx) => (
-              <button key={idx} onClick={(e) => { e.stopPropagation(); setOpen(true); }}
-                className="relative shrink-0 rounded-xl overflow-hidden border transition-all duration-200 hover:scale-105"
-                style={{ width: isMobile ? 110 : 126, height: isMobile ? 70 : 80, borderColor: `${accent}30` }}>
-                <img src={src} alt="" className="w-full h-full object-cover" />
-                <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${accent}18, transparent)` }} />
-              </button>
-            )) : (
-              <button onClick={(e) => { e.stopPropagation(); setOpen(true); }}
-                className="relative shrink-0 rounded-xl border overflow-hidden flex flex-col items-center justify-center gap-1 transition-all duration-200 hover:scale-105 group/glyph"
-                style={{
-                  width: isMobile ? 110 : 126, height: isMobile ? 70 : 80,
-                  borderColor: `${accent}28`,
-                  background: `linear-gradient(150deg, ${accent}16, rgba(7,16,12,0.9))`,
-                }}>
-                <div className="absolute inset-0" style={{ backgroundImage: `radial-gradient(${accent}22 1px, transparent 1px)`, backgroundSize: "10px 10px", opacity: 0.5 }} />
-                <div className="relative transition-transform duration-300 group-hover/glyph:scale-110">
-                  <GrowthGlyph accent={accent} size={isMobile ? 26 : 30} />
-                </div>
-                <span className="relative text-[9px] font-mono uppercase tracking-wider" style={{ color: accent }}>
-                  View story
-                </span>
-              </button>
-            )}
-          </div>
+          {images.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+              {images.map((src, idx) => (
+                <button key={idx} onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+                  className="relative shrink-0 rounded-xl overflow-hidden border transition-all duration-200 hover:scale-105"
+                  style={{ width: isMobile ? 110 : 126, height: isMobile ? 70 : 80, borderColor: `${accent}30` }}>
+                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${accent}18, transparent)` }} />
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="mt-3 flex items-center gap-1.5">
             <div className="w-1 h-1 rounded-full" style={{ background: accent, animation: "badge-pulse 2s infinite" }} />
@@ -602,11 +555,111 @@ function MilestoneCard({ milestone, accent, delay, isMobile }) {
 }
 
 /* ─────────────────────────────────────────────
-   TIMELINE NODE — signature element.
-   A growth ring (dendrochronology) fused with a circuit via:
-   concentric dashed rings read as tree-ring dating, the
-   diamond core reads as a PCB component, and four radiating
-   ticks read as trace legs. One motif, two readings.
+   VINE RAIL — the spine of the whole timeline, redrawn as a
+   winding vine instead of a straight rail. One leaf pair per
+   era unfurls as the vine grows past it, and a small sprout
+   sways at the current growing tip.
+───────────────────────────────────────────── */
+/* ─────────────────────────────────────────────
+   VINE RAIL — the spine of the whole timeline, redrawn as a
+   winding vine instead of a straight rail. It swings in one
+   wide S-bend per era rather than a tight repeating wiggle, so
+   it actually reads as a vine curving down the page. One leaf
+   pair per era unfurls as the vine grows past it, and a small
+   sprout sways at the current growing tip.
+───────────────────────────────────────────── */
+const VINE_AMP = 15; // how far the vine swings from center, in a 0–40 viewBox
+
+function buildVinePath(n, amp = VINE_AMP, total = 1000) {
+  const h = total / n;
+  let d = "M20,0";
+  for (let i = 0; i < n; i++) {
+    const yEnd = (i + 1) * h;
+    const dir = i % 2 === 0 ? 1 : -1;
+    const cx = 20 + dir * amp * 1.55;
+    const c1y = i * h + h / 3;
+    const c2y = i * h + (2 * h) / 3;
+    d += ` C${cx},${c1y} ${cx},${c2y} 20,${yEnd}`;
+  }
+  return d;
+}
+
+// Matches the S-bend above closely enough to place leaves/tip on the curve —
+// one full swing (out and back) per era, same as the path's rhythm.
+function xOnVine(y, n, amp = VINE_AMP, total = 1000) {
+  const period = (2 * total) / n;
+  return 20 + amp * Math.sin((2 * Math.PI * y) / period);
+}
+
+function VineRail({ progress, idSuffix }) {
+  const n = Math.max(timelineData.length, 1);
+  const vinePath = buildVinePath(n);
+  const tipY = Math.min(Math.max(progress, 0), 1) * 1000;
+  const tipX = xOnVine(tipY, n);
+  const clipId = `vine-clip-${idSuffix}`;
+  const gradId = `vine-grad-${idSuffix}`;
+
+  return (
+    <svg viewBox="0 0 40 1000" preserveAspectRatio="none"
+      className="absolute inset-0 w-full h-full overflow-visible pointer-events-none">
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={MOSS} />
+          <stop offset="45%" stopColor={TEAL} />
+          <stop offset="100%" stopColor={AMBER} />
+        </linearGradient>
+        <clipPath id={clipId}>
+          <rect x="0" y="0" width="40" height={tipY} />
+        </clipPath>
+      </defs>
+
+      {/* Ungrown vine — the path yet to come */}
+      <path d={vinePath} fill="none" stroke={RAIL_TRACK} strokeWidth="2.2" strokeLinecap="round" />
+
+      {/* Grown vine */}
+      <g clipPath={`url(#${clipId})`}>
+        <path d={vinePath} fill="none" stroke={`url(#${gradId})`} strokeWidth="2.2" strokeLinecap="round"
+          style={{ filter: `drop-shadow(0 0 4px ${MOSS}60)` }} />
+      </g>
+
+      {/* One leaf pair per era, colored by that era's own accent, tucked at the vine's edge */}
+      {timelineData.map((item, i) => {
+        const frac = (i + 0.5) / n;
+        const y = frac * 1000;
+        const x = xOnVine(y, n);
+        const side = i % 2 === 0 ? 1 : -1;
+        const active = tipY >= y;
+        const accent = item.accent || MOSS;
+        return (
+          <g key={item.year || i} transform={`translate(${x} ${y}) rotate(${side > 0 ? -18 : 198})`}>
+            <g style={{
+              transform: `scale(${active ? 1 : 0.35})`,
+              transformOrigin: "0px 0px",
+              transition: "transform 0.7s cubic-bezier(0.34,1.4,0.64,1), opacity 0.7s ease",
+              opacity: active ? 0.9 : 0.14,
+            }}>
+              <path d="M0,0 C4,-2.6 9,-2.2 13,0 C9,2.2 4,2.6 0,0 Z" fill={accent} />
+            </g>
+          </g>
+        );
+      })}
+
+      {/* Growing tip — a small sprout swaying at the current frontier */}
+      <g transform={`translate(${tipX} ${tipY})`}>
+        <g style={{ animation: "vine-sway 3.4s ease-in-out infinite", transformOrigin: "0px 0px" }}>
+          <path d="M0,0 C3,-4.5 3,-9.5 0,-14 C-3,-9.5 -3,-4.5 0,0 Z" fill={AMBER}
+            style={{ filter: `drop-shadow(0 0 6px ${AMBER}85)` }} />
+        </g>
+      </g>
+    </svg>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   TIMELINE NODE — a bud on the vine. The rings still read as
+   growth-ring dating and the diamond core still reads as a
+   circuit component, but once the vine has grown past it, two
+   small leaves unfurl on either side — the node blooms.
 ───────────────────────────────────────────── */
 function TimelineNode({ accent, active, index }) {
   const ticks = [0, 90, 180, 270];
@@ -636,6 +689,23 @@ function TimelineNode({ accent, active, index }) {
               style={{ transition: "stroke 0.5s ease" }} />
           );
         })}
+        {/* Two leaves that unfurl once this bud has bloomed */}
+        <g style={{
+          transform: `scale(${active ? 1 : 0.15})`,
+          transformOrigin: "0px 8px",
+          transition: "transform 0.6s cubic-bezier(0.34,1.4,0.64,1) 0.15s",
+          opacity: active ? 0.9 : 0,
+        }}>
+          <path d="M0,8 C-6,5 -11,7 -14,12 C-9,14 -3,13 0,8 Z" fill={accent} />
+        </g>
+        <g style={{
+          transform: `scale(${active ? 1 : 0.15})`,
+          transformOrigin: "0px 8px",
+          transition: "transform 0.6s cubic-bezier(0.34,1.4,0.64,1) 0.28s",
+          opacity: active ? 0.9 : 0,
+        }}>
+          <path d="M0,8 C6,5 11,7 14,12 C9,14 3,13 0,8 Z" fill={accent} />
+        </g>
       </svg>
 
       {/* Diamond "chip" core */}
@@ -674,9 +744,12 @@ function YearBlockMobile({ item, index, lineProgress }) {
   const nodePosition = index / Math.max(timelineData.length, 1);
   const nodeActive = lineProgress >= nodePosition;
   const accent = item.accent || MOSS;
+  // Same bend direction as the vine for this era — nudges the indent
+  // so the single mobile column still leans with the curve.
+  const curveDir = index % 2 === 0 ? 1 : -1;
 
   return (
-    <div ref={ref} className="relative pl-9 mb-10">
+    <div ref={ref} className="relative mb-10" style={{ paddingLeft: 36 + curveDir * 8 }}>
       <div className="absolute left-0 top-0.5 flex flex-col items-center" style={{ width: 22 }}>
         <div className="rounded-full transition-all duration-500"
           style={{
@@ -737,6 +810,11 @@ function YearBlockDesktop({ item, index, lineProgress }) {
   const nodePosition = index / Math.max(timelineData.length, 1);
   const nodeActive = lineProgress >= nodePosition;
   const accent = item.accent || MOSS;
+  // Same alternation as the vine path's bend direction for this era —
+  // the content leans the way the vine is swinging, instead of sitting
+  // in a rigid fixed column.
+  const curveDir = index % 2 === 0 ? 1 : -1;
+  const curveShift = curveDir * 18;
 
   return (
     <div ref={ref} className="relative flex items-start gap-0" style={{
@@ -745,7 +823,7 @@ function YearBlockDesktop({ item, index, lineProgress }) {
     }}>
       <div className="flex-1 min-w-0" style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? "translateX(0)" : isLeft ? "translateX(36px)" : "translateX(-36px)",
+        transform: visible ? `translateX(${curveShift}px)` : isLeft ? "translateX(36px)" : "translateX(-36px)",
         transition: "opacity 0.7s ease 0.1s, transform 0.7s cubic-bezier(0.22,1,0.36,1) 0.1s",
         paddingLeft: isLeft ? 0 : "2rem",
         paddingRight: isLeft ? "2rem" : 0,
@@ -793,7 +871,6 @@ function YearBlockDesktop({ item, index, lineProgress }) {
 ───────────────────────────────────────────── */
 export default function GrowthTimeline() {
   const containerRef = useRef(null);
-  const lineRef = useRef(null);
   const lineProgress = useScrollProgress(containerRef);
   const isMobile = useIsMobile();
   const lineHeightPct = `${Math.min(lineProgress * 100, 100)}%`;
@@ -810,25 +887,18 @@ export default function GrowthTimeline() {
           0%, 100% { opacity: 1; box-shadow: 0 0 0px transparent; }
           50%       { opacity: 0.72; }
         }
-        @keyframes line-glow {
-          0%, 100% { filter: blur(1.5px) brightness(1); }
-          50%       { filter: blur(3px) brightness(1.5); }
-        }
         @keyframes float-slow {
           0%, 100% { transform: translateY(0px) scale(1); }
           50%       { transform: translateY(-14px) scale(1.04); }
         }
-        @keyframes sap-flow {
-          0%   { transform: translateY(-12px); opacity: 0; }
-          10%  { opacity: 1; }
-          90%  { opacity: 1; }
-          100% { transform: translateY(12px); opacity: 0; }
+        @keyframes vine-sway {
+          0%, 100% { transform: rotate(-6deg); }
+          50%       { transform: rotate(6deg); }
         }
 
         .timeline-section { position: relative; overflow: hidden; }
         .scrollbar-none { scrollbar-width: none; }
         .scrollbar-none::-webkit-scrollbar { display: none; }
-        .tl-line-glow { animation: line-glow 3.5s ease-in-out infinite; }
       `}</style>
 
       <section id="journey" className="timeline-section parallax-bg section-y page-x min-h-screen">
@@ -876,22 +946,8 @@ export default function GrowthTimeline() {
           <div className="relative">
             {isMobile ? (
               <div className="relative">
-                <div className="absolute top-0 bottom-0 pointer-events-none" style={{ left: 9, width: 2, background: RAIL_TRACK }}>
-                  <div ref={lineRef} className="tl-line-glow" style={{
-                    position: "absolute", top: 0, left: 0, right: 0,
-                    height: lineHeightPct,
-                    background: RAIL_GRADIENT,
-                    borderRadius: 2,
-                    transition: "height 0.1s linear",
-                    boxShadow: `0 0 8px ${MOSS}55, 0 0 16px ${TEAL}30`,
-                  }}>
-                    {/* Sap droplet traveling along the rail — organic pulse on a technical line */}
-                    <div style={{
-                      position: "absolute", bottom: 0, left: -1.5, width: 5, height: 5,
-                      borderRadius: "50%", background: AMBER, boxShadow: `0 0 8px ${AMBER}`,
-                      animation: "sap-flow 2.6s ease-in-out infinite",
-                    }} />
-                  </div>
+                <div className="absolute top-0 bottom-0 pointer-events-none" style={{ left: -10, width: 40 }}>
+                  <VineRail progress={lineProgress} idSuffix="mobile" />
                 </div>
                 <div className="pt-1">
                   {timelineData.map((item, i) => (
@@ -902,21 +958,8 @@ export default function GrowthTimeline() {
             ) : (
               <div className="relative">
                 <div className="absolute top-0 bottom-0 pointer-events-none"
-                  style={{ left: "50%", transform: "translateX(-50%)", width: 2, background: RAIL_TRACK }}>
-                  <div ref={lineRef} className="tl-line-glow" style={{
-                    position: "absolute", top: 0, left: 0, right: 0,
-                    height: lineHeightPct,
-                    background: RAIL_GRADIENT,
-                    borderRadius: 2,
-                    transition: "height 0.1s linear",
-                    boxShadow: `0 0 10px ${MOSS}60, 0 0 20px ${TEAL}30`,
-                  }}>
-                    <div style={{
-                      position: "absolute", bottom: 0, left: -1.5, width: 5, height: 5,
-                      borderRadius: "50%", background: AMBER, boxShadow: `0 0 8px ${AMBER}`,
-                      animation: "sap-flow 2.6s ease-in-out infinite",
-                    }} />
-                  </div>
+                  style={{ left: "50%", transform: "translateX(-50%)", width: 58 }}>
+                  <VineRail progress={lineProgress} idSuffix="desktop" />
                 </div>
                 <div>
                   {timelineData.map((item, i) => (
