@@ -156,11 +156,15 @@ export default function ProjectAndAchievement() {
 
   useEffect(() => {
     if (!activeAchievement) return undefined;
+    document.body.style.overflow = "hidden";
     const onEsc = (e) => {
       if (e.key === "Escape") setActiveAchievement(null);
     };
     window.addEventListener("keydown", onEsc);
-    return () => window.removeEventListener("keydown", onEsc);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onEsc);
+    };
   }, [activeAchievement]);
 
   return (

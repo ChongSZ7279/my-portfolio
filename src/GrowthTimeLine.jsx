@@ -76,11 +76,14 @@ function useMousePosition() {
   return pos;
 }
 
-function getMilestoneImages(milestone) {
-  if (Array.isArray(milestone.images) && milestone.images.length > 0) return milestone.images.filter(Boolean);
-  if (milestone.image) return [milestone.image];
-  if (milestone.coverImage) return [milestone.coverImage];
-  return [];
+function getCoverImage(milestone) {
+  if (milestone.coverImage) return milestone.coverImage;
+  if (milestone.image) return milestone.image;
+  if (Array.isArray(milestone.images)) {
+    const first = milestone.images.filter(Boolean)[0];
+    if (first) return first;
+  }
+  return null;
 }
 
 /* ─────────────────────────────────────────────
@@ -198,74 +201,60 @@ function Badge({ label, color = AMBER }) {
 }
 
 /* ─────────────────────────────────────────────
-   IMAGE CAROUSEL — unchanged mechanics, recolored chrome.
-   Only ever rendered when images.length > 0 (JourneyModal
-   switches to a text-only layout otherwise), so no placeholder
-   branch is needed here.
+   COVER IMAGE — full photo shown via a blurred backdrop
+   fill (no letterboxing, no color mismatch) with the actual
+   photo layered on top using object-contain, so nobody gets
+   cropped out. Framed like a HUD viewfinder: corner brackets,
+   a slow scan sweep, and a small pulsing readout — reads as
+   tech instrumentation rather than a plain photo crop.
 ───────────────────────────────────────────── */
-function ImageCarousel({ images, accent, title, embedded = false }) {
-  const [idx, setIdx] = useState(0);
-  const [fading, setFading] = useState(false);
-
-  const goTo = useCallback((i) => {
-    if (i === idx) return;
-    setFading(true);
-    setTimeout(() => { setIdx(i); setFading(false); }, 220);
-  }, [idx]);
-
-  if (images.length === 0) return null;
-
+function CoverImage({ src, accent, title }) {
+  if (!src) return null;
   return (
-    <div className={`relative w-full flex flex-col ${embedded ? "h-full min-h-[280px]" : "h-full"}`}>
-      <div className={`relative overflow-hidden ${embedded ? "flex-1 min-h-[220px]" : "flex-1 rounded-xl"}`}>
-        <img
-          src={images[idx]}
-          alt={`${title} — ${idx + 1}`}
-          className="w-full h-full object-cover"
-          style={{ opacity: fading ? 0 : 1, transition: "opacity 0.22s ease" }}
-        />
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: `linear-gradient(to top, rgba(5,15,10,0.75) 0%, transparent 40%)` }} />
+    <div className="relative w-full h-full overflow-hidden" style={{ background: "#050f0a" }}>
+      {/* Blurred backdrop — same image, scaled up, fills any empty space */}
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url(${src})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          filter: "blur(28px) saturate(1.3) brightness(0.55)",
+          transform: "scale(1.25)",
+        }}
+      />
+      <div className="absolute inset-0" style={{ background: `${accent}14` }} />
 
-        {images.length > 1 && (
-          <div className="absolute bottom-3 right-3 px-2 py-0.5 rounded-full text-[10px] font-mono"
-            style={{ background: "rgba(5,15,10,0.65)", color: "rgba(238,245,240,0.65)", backdropFilter: "blur(8px)" }}>
-            {idx + 1} / {images.length}
-          </div>
-        )}
+      {/* Full, uncropped photo */}
+      <img
+        src={src}
+        alt={title}
+        className="relative w-full h-full"
+        style={{ objectFit: "contain" }}
+      />
 
-        {images.length > 1 && (
-          <>
-            <button onClick={() => goTo((idx - 1 + images.length) % images.length)}
-              className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-xs transition-all hover:scale-110"
-              style={{ background: "rgba(5,15,10,0.6)", color: "rgba(238,245,240,0.85)", backdropFilter: "blur(8px)" }}>‹</button>
-            <button onClick={() => goTo((idx + 1) % images.length)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center text-xs transition-all hover:scale-110"
-              style={{ background: "rgba(5,15,10,0.6)", color: "rgba(238,245,240,0.85)", backdropFilter: "blur(8px)" }}>›</button>
-          </>
-        )}
-      </div>
+      {/* Bottom readability gradient — kept minimal so the photo stays visible */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: `linear-gradient(to top, rgba(5,15,10,0.55) 0%, transparent 30%)` }} />
 
-      {images.length > 1 && (
-        <div className={`flex gap-2 overflow-x-auto pb-1 scrollbar-none ${embedded ? "mt-2 px-1 flex-shrink-0" : "mt-2"}`}>
-          {images.map((src, i) => (
-            <button key={i} onClick={() => goTo(i)}
-              className="shrink-0 rounded-lg overflow-hidden transition-all duration-200"
-              style={{
-                width: 58, height: 40,
-                outline: i === idx ? `2px solid ${accent}` : "2px solid transparent",
-                outlineOffset: 1,
-                opacity: i === idx ? 1 : 0.45,
-                transform: i === idx ? "scale(1.05)" : "scale(1)",
-              }}>
-              <img src={src} alt="" className="w-full h-full object-cover" />
-            </button>
-          ))}
-        </div>
-      )}
+      {/* HUD corner brackets */}
+      {[
+        { top: 10, left: 10, rotate: 0 },
+        { top: 10, right: 10, rotate: 90 },
+        { bottom: 10, left: 10, rotate: -90 },
+        { bottom: 10, right: 10, rotate: 180 },
+      ].map((pos, i) => (
+        <svg key={i} width="18" height="18" viewBox="0 0 18 18"
+          className="absolute pointer-events-none"
+          style={{ ...pos, transform: `rotate(${pos.rotate}deg)`, opacity: 0.85 }}>
+          <path d="M1,9 L1,1 L9,1" fill="none" stroke={accent} strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
+      ))}
+
     </div>
   );
 }
+
 
 /* ─────────────────────────────────────────────
    JOURNEY MODAL — same layout, recolored to the forest/PCB palette
@@ -294,7 +283,7 @@ function JourneyModal({ milestone, accent, onClose }) {
   }, [onClose]);
 
   if (!mounted || !milestone) return null;
-  const images = getMilestoneImages(milestone);
+  const cover = getCoverImage(milestone);
 
   return createPortal(
     <>
@@ -356,11 +345,11 @@ function JourneyModal({ milestone, accent, onClose }) {
                 )}
               </div>
 
-              <div className={images.length > 0 ? "grid md:grid-cols-[1.1fr_0.9fr] gap-5" : "grid gap-5"}>
-                {images.length > 0 && (
+              <div className={cover ? "grid md:grid-cols-[1.1fr_0.9fr] gap-5" : "grid gap-5"}>
+                {cover && (
                   <div className="relative rounded-2xl overflow-hidden border"
-                    style={{ borderColor: `${accent}25`, minHeight: 280, background: "rgba(5,15,10,0.85)" }}>
-                    <ImageCarousel images={images} accent={accent} title={milestone.title} />
+                    style={{ borderColor: `${accent}25`, minHeight: 340, background: "rgba(5,15,10,0.85)" }}>
+                    <CoverImage src={cover} accent={accent} title={milestone.title} />
                   </div>
                 )}
 
@@ -370,16 +359,16 @@ function JourneyModal({ milestone, accent, onClose }) {
                       style={{ color: INK, letterSpacing: "-0.01em" }}>
                       {milestone.title}
                     </h3>
-                    <p style={{ color: MUTED }} className={images.length > 0 ? "text-[13.5px] leading-relaxed" : "text-[15px] leading-relaxed max-w-2xl"}>{milestone.description}</p>
+                    <p style={{ color: MUTED }} className={cover ? "text-[13.5px] leading-relaxed" : "text-[15px] leading-relaxed max-w-2xl"}>{milestone.description}</p>
                   </div>
 
                   {milestone.details?.length > 0 && (
-                    <div className={images.length > 0 ? "rounded-xl border p-4" : "rounded-xl border p-5 max-w-2xl"}
+                    <div className={cover ? "rounded-xl border p-4" : "rounded-xl border p-5 max-w-2xl"}
                       style={{ borderColor: `${accent}20`, background: `${accent}07` }}>
                       <div className="text-[10px] font-mono uppercase tracking-[0.12em] mb-3" style={{ color: accent }}>
                         ▸ Highlights
                       </div>
-                      <ul className={images.length > 0 ? "space-y-2" : "space-y-2.5"}>
+                      <ul className={cover ? "space-y-2" : "space-y-2.5"}>
                         {milestone.details.map((d, i) => (
                           <li key={i} className="flex items-start gap-2.5 text-[13px] leading-snug" style={{ color: "#cdd9d2" }}>
                             <span className="mt-0.5 text-xs shrink-0" style={{ color: accent }}>◆</span>
@@ -429,7 +418,7 @@ function MilestoneCard({ milestone, accent, delay, isMobile }) {
   const visible = useIntersection(ref);
   const [hovered, setHovered] = useState(false);
   const [open, setOpen] = useState(false);
-  const images = getMilestoneImages(milestone);
+  const cover = getCoverImage(milestone);
 
   const cardContent = (
     <div
@@ -496,7 +485,7 @@ function MilestoneCard({ milestone, accent, delay, isMobile }) {
           </h4>
 
           <p className={`leading-relaxed mb-4 ${isMobile ? "text-[12.5px]" : "text-[13px]"}`}
-            style={{ color: MUTED, display: "-webkit-box", WebkitLineClamp: images.length > 0 ? 3 : 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+            style={{ color: MUTED, display: "-webkit-box", WebkitLineClamp: cover ? 3 : 4, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
             {milestone.description}
           </p>
 
@@ -517,17 +506,12 @@ function MilestoneCard({ milestone, accent, delay, isMobile }) {
             )}
           </div>
 
-          {images.length > 0 && (
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-              {images.map((src, idx) => (
-                <button key={idx} onClick={(e) => { e.stopPropagation(); setOpen(true); }}
-                  className="relative shrink-0 rounded-xl overflow-hidden border transition-all duration-200 hover:scale-105"
-                  style={{ width: isMobile ? 110 : 126, height: isMobile ? 70 : 80, borderColor: `${accent}30` }}>
-                  <img src={src} alt="" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${accent}18, transparent)` }} />
-                </button>
-              ))}
-            </div>
+          {cover && (
+            <button onClick={(e) => { e.stopPropagation(); setOpen(true); }}
+              className="relative w-full rounded-xl overflow-hidden border transition-all duration-200 hover:scale-[1.015]"
+              style={{ height: isMobile ? 170 : 200, borderColor: `${accent}30` }}>
+              <CoverImage src={cover} accent={accent} title={milestone.title} />
+            </button>
           )}
 
           <div className="mt-3 flex items-center gap-1.5">
@@ -554,12 +538,6 @@ function MilestoneCard({ milestone, accent, delay, isMobile }) {
   );
 }
 
-/* ─────────────────────────────────────────────
-   VINE RAIL — the spine of the whole timeline, redrawn as a
-   winding vine instead of a straight rail. One leaf pair per
-   era unfurls as the vine grows past it, and a small sprout
-   sways at the current growing tip.
-───────────────────────────────────────────── */
 /* ─────────────────────────────────────────────
    VINE RAIL — the spine of the whole timeline, redrawn as a
    winding vine instead of a straight rail. It swings in one
@@ -894,6 +872,12 @@ export default function GrowthTimeline() {
         @keyframes vine-sway {
           0%, 100% { transform: rotate(-6deg); }
           50%       { transform: rotate(6deg); }
+        }
+        @keyframes scan-sweep {
+          0%   { top: -10%; opacity: 0; }
+          10%  { opacity: 1; }
+          90%  { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
         }
 
         .timeline-section { position: relative; overflow: hidden; }

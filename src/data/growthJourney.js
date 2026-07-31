@@ -2,11 +2,15 @@ import RoboconMalaysiaImg from "./image/achievements/RoboconMalaysia.png";
 import ABURoboconImg from "./image/achievements/ABURobocon.png";
 import FriendlyMatchImg from "./image/achievements/FriendlyMatch.png";
 import SiewZhen from "./image/SiewZhen.png";
-import TVPSSImg from "./image/projects/TVPSS/web.png";
+import TVPSSImg from "./image/projects/tvpss_rest/web.png";
 import VarsityHackathonImg from "./image/achievements/VarsityHackathon.png";
 import KaChingImg from "./image/achievements/StartUp.png";
 import MindfulMeImg from "./image/projects/mindfulme/web.png";
 
+import YoungMaker from "./image/achievements/YoungMakerChallenge.png"
+import MFLS from "./image/achievements/MFLS.png"
+import SMKA from "./image/achievements/SMKA.png"
+import KML from "./image/achievements/KML.png"
 // growthJourney.js — fake data with rich placeholder images for media card layout
 
 export const timelineData = [
@@ -25,7 +29,7 @@ export const timelineData = [
         description:
           "Developed Ecojaya — a smart pest control and automated watering system using Arduino Uno with soil-moisture and PIR sensors.",
         tags: ["Arduino", "IoT", "Automation", "Sensors"],
-        details: ["Represented Sarawak", "Team: AsaGiant", "Project: Ecojaya"],
+        details: ["Sarawak Representative", "Team: AsaGiant", "Project: Ecojaya"],
         link: null,
         coverImage: null,
         images: [
@@ -64,7 +68,7 @@ export const timelineData = [
         description:
           "Achieved outstanding SPM results and earned the prestigious Sri Asajaya school award for academic distinction.",
         tags: ["SPM", "5A+", "4A", "1B"],
-        details: ["5A+ 4A 1B", "Sri Asajaya Award 2020", "Anugerah Kecemerlangan Kokurikulum 2020"],
+        details: ["SPM: 5A+ 4A 1B", "Sri Asajaya Award 2020", "Anugerah Kecemerlangan Kokurikulum 2020"],
         link: null,
         coverImage: null,
         images: [
@@ -88,7 +92,7 @@ export const timelineData = [
         description:
           "Completed Science Physical matriculation (Maths, Computer Science, Physics, Chemistry) with a perfect PNGK 4.0.",
         tags: ["Mathematics", "CS", "Physics", "Chemistry"],
-        details: ["PNGK: 4.0", "MUET: Band 4"],
+        details: ["PNGK: 4.0", "MUET: Band 4", "PAL Leader - Mathematics", "Secretary of Fun Run KML"],
         link: null,
         coverImage: null,
         images: [
@@ -112,28 +116,28 @@ export const timelineData = [
         description:
           "Started Software Engineering at UTM and immediately explored real-world projects, robotics and competitions.",
         tags: ["Software Engineering", "UTM"],
-        details: [],
+        details: ["CGPA: 3.96", "Dean List x 8"],
         link: null,
         coverImage: null,
         images: [
         ],
-        meta: { role: "Student", team: "UTM FSKSM", tools: "—", award: "Enrolled" },
+        meta: { role: "Student", team: "UTM FC", tools: "—", award: "Enrolled" },
       },
-      {
-        title: "Airost Internship",
-        category: "Industry",
-        badge: "First Industry Experience",
-        badgeColor: "#0ea5e9",
-        description:
-          "Built Tapao Tracker, a food order tracking system using PHP, HTML, CSS and JavaScript.",
-        tags: ["PHP", "HTML", "CSS", "JavaScript"],
-        details: ["Tapao Tracker project"],
-        link: null,
-        coverImage: null,
-        images: [
-        ],
-        meta: { role: "Intern Developer", team: "Airost", tools: "PHP / JS", award: "Completed" },
-      },
+      // {
+      //   title: "Airost Internship",
+      //   category: "Industry",
+      //   badge: "First Industry Experience",
+      //   badgeColor: "#0ea5e9",
+      //   description:
+      //     "Built Tapao Tracker, a food order tracking system using PHP, HTML, CSS and JavaScript.",
+      //   tags: ["PHP", "HTML", "CSS", "JavaScript"],
+      //   details: ["Tapao Tracker project"],
+      //   link: null,
+      //   coverImage: null,
+      //   images: [
+      //   ],
+      //   meta: { role: "Intern Developer", team: "Airost", tools: "PHP / JS", award: "Completed" },
+      // },
       {
         title: "UTM Robocon Team",
         category: "Team",
@@ -189,6 +193,26 @@ export const timelineData = [
         meta: { role: "Lead Programmer", team: "UTM Robocon", tools: "STM32 / ROS", award: "Champion 🏆" },
       },
       {
+        title: "International Youth Robot Competition (IYRC)",
+        category: "International",
+        badge: "Co-Organizer",
+        badgeColor: "#8b5cf6",
+        description:
+          "Co-organized an international robotics competition, supporting event planning, technical coordination, and competition management.",
+        tags: ["IYRC", "International", "Robotics"],
+        details: [
+          "Supported competition planning and execution.",
+          "Contributed to robotics event coordination.",
+        ],
+        link: null,
+        coverImage: null,
+        images: [],
+        meta: {
+          role: "Co-Organizer",
+          tools: "Robotics, Embedded Systems",
+        },
+      },
+      {
         title: "ABU Robocon — Rohn Award",
         category: "International",
         badge: "🏅 Rohn Award",
@@ -228,6 +252,21 @@ export const timelineData = [
     side: "left",
     milestones: [
       {
+        title: "Friendly Match",
+        category: "National",
+        badge: "🏅Champion",
+        badgeColor: "#f59e0b",
+        description:
+          "Organized a friendly match involving 6 teams from 8 universities and won the Champion title.",
+        tags: ["Champion", "Organizer of Friendly Match"],
+        details: ["Champion"],
+        link: null,
+        coverImage: null,
+        images: [
+        ],
+        meta: { role: "Lead Programmer", team: "Malaysia Team", tools: "Embedded / ROS", award: "Panasonic Award" },
+      },
+      {
         title: "ABU Robocon — Panasonic Award",
         category: "International",
         badge: "🏅 Panasonic Award",
@@ -235,7 +274,7 @@ export const timelineData = [
         description:
           "Received the Panasonic Award at ABU Robocon 2024 for innovative robotics engineering.",
         tags: ["ABU Robocon", "Panasonic Award"],
-        details: ["Organizer of Friendly Match", "Friendly Match Champion"],
+        details: ["Panasonic Award"],
         link: null,
         coverImage: null,
         images: [

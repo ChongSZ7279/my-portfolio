@@ -15,8 +15,8 @@ import TrustChainWeb from "./image/projects/trustchain/web.png";
 import TrustChainMobile from "./image/projects/trustchain/mobile.png";
 import TrustChainAll from "./image/projects/trustchain/all.png";
 
-import TVPSSWeb from "./image/projects/tvpss/web.png";
-import TVPSSAll from "./image/projects/tvpss/all.png";
+import TVPSSWeb from "./image/projects/tvpss_rest/web.png";
+import TVPSSAll from "./image/projects/tvpss_rest/all.png";
 
 import RoboconWeb from "./image/projects/robocon/web.png";
 import RoboconMobile from "./image/projects/robocon/mobile.png";
