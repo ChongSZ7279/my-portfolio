@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import GrowthTimeline from "./GrowthTimeLine";
+import PageSeo, { SITE_URL } from "./components/PageSeo";
 import { Terminal, ArrowLeft } from "lucide-react";
 import SiewZhenImg from "./data/image/SiewZhen.png";
 import useHorizontalSwipeNavigate from "./hooks/useHorizontalSwipeNavigate";
@@ -452,6 +453,19 @@ export default function Journey() {
 
   return (
     <div className="natural-tech-page journey-page min-h-screen text-white font-sans overflow-x-hidden" style={{ background: `radial-gradient(ellipse at 50% -10%, #0a1a12 0%, ${BG_DEEP} 60%)` }}>
+      <PageSeo
+        title="Growth Journey | Chong Siew Zhen"
+        description="Six years of building, competing, and shipping — from Young Maker Challenge in Sarawak to Robocon Malaysia, ABU Robocon, and blockchain hackathons."
+        path="/journey"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "WebPage",
+          "name": "Growth Journey | Chong Siew Zhen",
+          "url": `${SITE_URL}/journey`,
+          "description": "Timeline of competitions, internships, and projects by Chong Siew Zhen.",
+          "isPartOf": { "@id": `${SITE_URL}/#website` },
+        }}
+      />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Space+Grotesk:wght@400;500;700&family=Outfit:wght@300;400;500;600&display=swap');
         * { font-family: 'Outfit', sans-serif; box-sizing: border-box; }

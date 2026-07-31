@@ -11,6 +11,7 @@ import GrowthTimeline from './GrowthTimeLine';
 import AboutMe from './AboutMe';
 import ProjectsAndAchievements from './ProjectAndAchivement';
 import SectionHeader from './components/SectionHeader';
+import PageSeo, { SITE_URL } from './components/PageSeo';
 import useHorizontalSwipeNavigate from './hooks/useHorizontalSwipeNavigate';
 
 // ─── PARTICLE SYSTEM ───────────────────────────────────────────────────────────
@@ -333,6 +334,18 @@ const Portfolio = () => {
 
   return (
     <div className="natural-tech-page portfolio-page min-h-screen bg-[#050B17] text-white font-sans overflow-x-hidden">
+      <PageSeo
+        title="Chong Siew Zhen | Full-Stack Developer & UI/UX Designer"
+        description="Portfolio of Chong Siew Zhen — Malaysia-based full-stack developer and UI/UX designer. Web, mobile, AI, blockchain, and robotics projects."
+        path="/"
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "ProfilePage",
+          "name": "Chong Siew Zhen Portfolio",
+          "url": `${SITE_URL}/`,
+          "mainEntity": { "@id": `${SITE_URL}/#person` },
+        }}
+      />
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Outfit:wght@300;400;500;600;700&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,600&family=Space+Grotesk:wght@500;700&display=swap');
