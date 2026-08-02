@@ -588,7 +588,7 @@ export default function Journey() {
             </span>
           </div>
           <p className="text-xs font-mono" style={{ color: "#2a3a32" }}>
-            © 2026 · Built with React + Tailwind · Imperfectly Perfect
+            © Chong Siew Zhen 2026 · Imperfectly Perfect
           </p>
         </div>
       </footer>

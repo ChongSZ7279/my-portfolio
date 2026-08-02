@@ -295,7 +295,7 @@ const Portfolio = () => {
   const [loaded, setLoaded] = useState(false);
 
   const stats = [
-    { n: 3.97, suffix: '', label: 'CGPA' },
+    { n: 3.96, suffix: '', label: 'CGPA' },
     { n: ACHIEVEMENTS.length, suffix: '', label: 'Awards' },
     { n: PROJECTS.length, suffix: '', label: 'Projects' },
     { n: Object.values(TECH_STACK).reduce((acc, arr) => acc + (Array.isArray(arr) ? arr.length : 0), 0), suffix: '', label: 'Technologies' },
@@ -590,7 +590,7 @@ const Portfolio = () => {
 
       {/* ── HERO ── */}
       <main id="main-content">
-      <section id="home" aria-labelledby="portfolio-title" className="hero-section relative min-h-screen flex flex-col justify-center px-4 sm:px-6 pt-20">
+      <section id="home" aria-labelledby="portfolio-title" className="hero-section relative min-h-screen flex flex-col justify-center px-4 sm:px-6 pt-20 mt-4">
         <div className="max-w-6xl mx-auto w-full">
           <div className={`transition-all duration-1000 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
             <div className="flex items-center gap-3 mb-8">
@@ -632,7 +632,7 @@ const Portfolio = () => {
               </a>
             </div>
 
-            <div className="grid grid-cols-4 gap-4 border-t border-slate-800 pt-8 sm:flex sm:flex-wrap sm:gap-8">
+            <div className="grid grid-cols-4 gap-4 border-t border-slate-800 pt-8 sm:flex sm:flex-wrap sm:gap-8 mb-12">
               {stats.map(({ n, suffix, label }) => (
                 <div key={label} className="min-w-0">
                   <div className="text-2xl font-black text-white font-display tabular-nums">
@@ -748,9 +748,9 @@ const Portfolio = () => {
                 className="w-full h-full object-cover"
               />
             </div>
-            <span className="text-slate-500 text-sm font-mono">Chong Siew Zhen <span className="text-slate-700">·</span> UTM Software Engineering <span className="text-slate-700">·</span> CGPA 3.97</span>
+            <span className="text-slate-500 text-sm font-mono">Chong Siew Zhen <span className="text-slate-700">·</span> UTM Software Engineering <span className="text-slate-700">·</span> CGPA 3.96</span>
           </div>
-          <p className="text-slate-700 text-xs font-mono">© 2026 · Built with React + Tailwind · Imperfectly Perfect</p>
+          <p className="text-slate-700 text-xs font-mono">© Chong Siew Zhen 2026 · Imperfectly Perfect</p>
         </div>
       </footer>
     </div>

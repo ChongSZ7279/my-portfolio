@@ -916,11 +916,16 @@ export default function GrowthTimeline() {
             title={
               <>
                 Growth
-                <span className="block italic" style={{
-                  background: HERO_GRADIENT,
-                  WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text",
-                }}>
-                  Timeline
+                <span
+                  style={{
+                    fontStyle: "italic",
+                    background: "linear-gradient(135deg, #34d399 0%, #22d3ee 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                    backgroundClip: "text",
+                  }}
+                >
+                  Timeline.
                 </span>
               </>
             }

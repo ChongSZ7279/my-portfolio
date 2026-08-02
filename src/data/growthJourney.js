@@ -399,6 +399,26 @@ export const timelineData = [
         meta: { role: "Full-Stack Dev", team: "MindfulMe Team", tools: "Flutter / Gemini AI", award: "Finalist" },
       },
       {
+        title: "RedNote Content Creator",
+        category: "Content Creation",
+        badge: "Creator",
+        badgeColor: "#ef4444",
+        description:
+          "Created educational and lifestyle content on RedNote, building an engaged audience with over 500 followers and more than 8,000 likes and collections.",
+        tags: ["Content Creation", "Social Media", "Personal Branding"],
+        details: ["500+ Followers", "8K+ Likes & Collections"],
+        link: null,
+        coverImage: null,
+        images: [
+        ],
+        meta: {
+          role: "Content Creator",
+          team: "RedNote",
+          tools: "Content Creation / Video Editing",
+          award: "500+ Followers"
+        },
+      },
+      {
         title: "Sarawak Energy Internship",
         category: "Industry",
         badge: "Internship",
