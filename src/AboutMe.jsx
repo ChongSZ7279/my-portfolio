@@ -210,7 +210,7 @@ export default function AboutMe({ onExploreProjects }) {
                   </span>
                 </>
               }
-              subtitle="Not just a résumé — a bit of context on where I come from, what I build, and how I work."
+              subtitle="Not just a resume — a bit of context on where I come from, what I build, and how I work."
             />
           </div>
 

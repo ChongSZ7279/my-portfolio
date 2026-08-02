@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Github, Linkedin, Mail, ChevronDown, Menu, X, ArrowRight, Terminal } from 'lucide-react';
 import SiewZhenImg from './data/image/SiewZhen.png';
+import CVFile from './data/CV_ChongSiewZhen.pdf';
 import { ABOUT_CARDS } from './data/about';
 import { PROJECTS } from './data/projects';
 import { ACHIEVEMENTS } from './data/achievements';
@@ -552,9 +553,9 @@ const Portfolio = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              <a href="mailto:chong.zhen@graduate.utm.my" className="hidden md:flex items-center gap-2 px-4 py-2 border border-cyan-500/40 rounded-lg text-sm text-cyan-400 hover:bg-cyan-500/10 transition-all font-mono">
+              <a href={CVFile} download="CV_ChongSiewZhen.pdf" className="hidden md:flex items-center gap-2 px-4 py-2 border border-cyan-500/40 rounded-lg text-sm text-cyan-400 hover:bg-cyan-500/10 transition-all font-mono">
                 <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></span>
-                Open to work
+                Download Resume
               </a>
               <button
                 className="md:hidden w-9 h-9 rounded-xl flex items-center justify-center text-slate-300 hover:text-white transition-all"
