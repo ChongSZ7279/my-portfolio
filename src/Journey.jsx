@@ -584,7 +584,7 @@ export default function Journey() {
             </div>
             <span className="text-sm font-mono" style={{ color: "#6b8277" }}>
               Chong Siew Zhen <span style={{ color: "#2a3a32" }}>·</span> UTM Software
-              Engineering <span style={{ color: "#2a3a32" }}>·</span> CGPA 3.97
+              Engineering <span style={{ color: "#2a3a32" }}>·</span> CGPA 3.96
             </span>
           </div>
           <p className="text-xs font-mono" style={{ color: "#2a3a32" }}>
